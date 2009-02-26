@@ -69,7 +69,7 @@ public:
 	void Print() { std::cout << integer; }
 };
 
-class BodyAST : public std::vector<AST *>
+class BodyAST : public std::list<AST *>
 {
 public:
 	int OutputSize()
@@ -102,17 +102,16 @@ public:
 	int OutputSize() { return body->OutputSize(); }
 	void Print()
 	{
-		std::cout << name << " (";
+		std::cout << name << " ";
 		for(int i = 0; i < args->OutputSize(); i++)
 			std::cout << " n";
 		std::cout << " -- ";
 		for(int i = 0; i < body->OutputSize(); i++)
 			std::cout << " n";
-		std::cout << " )" << std::endl;
 
 		for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
 		{
-			std::cout << " ";
+			std::cout << std::endl << "  ";
 			(*it)->Print();
 		}
 		
@@ -142,30 +141,77 @@ public:
 	void Print() { std::cout << "arg" << n; }
 };
 
+class OutputIndexAST : public AST
+{
+	AST *ast;
+	int index;
+public:
+	OutputIndexAST(AST *_ast, int _index)
+		: ast(_ast), index(_index) { }
+	int InputSize() { return 0; }
+	int OutputSize() { return 1; }
+	void Print()
+	{
+		if(ast->OutputSize() == 1)
+			ast->Print();
+		else
+		{
+			std::cout << "[";
+			ast->Print();
+			std::cout << "]:" << index;
+		}
+	}
+};
+
 class DupAST : public AST
 {
-	BodyAST *args;
+	OutputIndexAST *arg1;
 public:
-	DupAST(BodyAST *_args) : args(_args)
-	{
-		assert(args->OutputSize() == 1);
-	}
+	DupAST(OutputIndexAST *_arg1) : arg1(_arg1) { }
 	int InputSize() { return 1; }
 	int OutputSize() { return 2; }
-	void Print() { args->Print(); std::cout << " dup"; }
+	void Print()
+	{
+		arg1->Print();
+		std::cout << " ";
+		arg1->Print();
+	}
 };
 
 class MultAST : public AST
 {
-	BodyAST *args;
+	OutputIndexAST *arg1;
+	OutputIndexAST *arg2;
 public:
-	MultAST(BodyAST *_args) : args(_args)
-	{
-		assert(args->OutputSize() == 2);
-	}
+	MultAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2) { }
 	int InputSize() { return 2; }
 	int OutputSize() { return 1; }
-	void Print() { args->Print(); std::cout << " *"; }
+	void Print()
+	{
+		std::cout << "(";
+		arg1->Print();
+		std::cout << "*";
+		arg2->Print();
+		std::cout << ")";
+	}
+};
+
+class AddAST : public AST
+{
+	OutputIndexAST *arg1;
+	OutputIndexAST *arg2;
+public:
+	AddAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2) { }
+	int InputSize() { return 2; }
+	int OutputSize() { return 1; }
+	void Print()
+	{
+		std::cout << "(";
+		arg1->Print();
+		std::cout << "+";
+		arg2->Print();
+		std::cout << ")";
+	}
 };
 
 // --- Parser ---
@@ -173,7 +219,16 @@ public:
 class InferenceStack
 {
 public:
-	BodyAST stack;
+	class Counter
+	{
+	public:
+		AST *ast;
+		int index;
+		Counter(AST *_ast)
+			: ast(_ast), index(0) { }
+	};
+
+	std::vector<Counter*> stack;
 	BodyAST args;
 
 	InferenceStack() { }
@@ -184,31 +239,42 @@ public:
 		args.clear();
 	}
 
-	BodyAST *Pop(int size)
+	OutputIndexAST *Pop()
 	{
-		int stack_size = stack.OutputSize();
-
-		if(stack_size < size)
-			for(int i = 0; i < size - stack_size; i++)
-			{
-				AST *arg = new ArgAST(i + args.OutputSize());
-				args.push_back(arg);
-				stack.push_back(arg);
-			}		
-
-		BodyAST *func_args = new BodyAST();
-		while(size > 0)
+		if(stack.size() == 0)
 		{
-			func_args->push_back(stack.back());
-			size -= stack.back()->OutputSize();
+			AST *arg = new ArgAST(args.size());
+			args.push_back(arg);
+			Push(arg);
+		}
+
+		assert(stack.size() != 0);
+		Counter *counter = stack.back();
+		OutputIndexAST *stack_index = new OutputIndexAST(counter->ast, counter->index);
+
+		counter->index++;
+		if(counter->index == counter->ast->OutputSize())
+		{
+			delete counter;
 			stack.pop_back();
 		}
-		return func_args;
+
+		return stack_index;
+	}
+
+	BodyAST *Pop(int size)
+	{
+		BodyAST *body = new BodyAST();
+		while(size > 0)
+		{
+			body->push_back(Pop());
+			size--;
+		}
 	}
 
 	void Push(AST *ast)
 	{
-		stack.push_back(ast);
+		stack.push_back(new Counter(ast));
 	}
 };
 
@@ -254,13 +320,22 @@ public:
 
 		if(word == "dup")
 		{
-			AST *dup = new DupAST(istack.Pop(1));
+			AST *dup = new DupAST(istack.Pop());
 			istack.Push(dup);
 		}
 		else if(word == "*")
 		{
-			AST *mult = new MultAST(istack.Pop(2));
+			OutputIndexAST *arg2 = istack.Pop();
+			OutputIndexAST *arg1 = istack.Pop();
+			AST *mult = new MultAST(arg1, arg2);
 			istack.Push(mult);
+		}
+		else if(word == "+")
+		{
+			OutputIndexAST *arg2 = istack.Pop();
+			OutputIndexAST *arg1 = istack.Pop();
+			AST *add = new AddAST(arg1, arg2);
+			istack.Push(add);
 		}
 		else
 		{
@@ -323,8 +398,8 @@ public:
 		ParseBody(";");
 
 		BodyAST *func_body = new BodyAST();
-		for(BodyAST::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
-			func_body->push_back(*it);
+		while(istack.stack.size())
+			func_body->push_front(istack.Pop());
 
 		BodyAST *func_args = new BodyAST();
 		for(BodyAST::iterator it = istack.args.begin(); it != istack.args.end(); it++)
@@ -354,7 +429,7 @@ int main(int argc, char **argv)
 {
 	try
 	{
-		std::istringstream in(": double dup * ;");
+		std::istringstream in(": test dup * 5 + ; : test2 dup + + 5 ;");
 		Lexer lexer(in);
 		lexer.NextToken();
 
