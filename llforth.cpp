@@ -8,6 +8,9 @@
 #include <llvm/Function.h>
 #include <llvm/CallingConv.h>
 #include <llvm/Support/IRBuilder.h>
+#include <llvm/CodeGen/Passes.h>
+#include <llvm/LinkAllPasses.h>
+#include <llvm/Target/TargetData.h>
 
 using namespace llvm;
 

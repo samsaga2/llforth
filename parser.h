@@ -218,6 +218,20 @@ public:
 
 		for(Functions::iterator it = functions.begin(); it != functions.end(); it++)
 			(*it)->Compile(&module);
+
+		PassManager pm;
+		pm.add(new TargetData(&module));
+		pm.add(createIPSCCPPass());
+		pm.add(createGlobalOptimizerPass());
+		pm.add(createInstructionCombiningPass());
+		pm.add(createFunctionInliningPass());
+		pm.add(createGlobalOptimizerPass());
+		pm.add(createInstructionCombiningPass());
+		pm.add(createGVNPass());
+		pm.add(createPromoteMemoryToRegisterPass());
+		pm.add(createCFGSimplificationPass());
+		pm.run(module);
+	
 	
 		module.dump();
 	}
