@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 {
 	try
 	{
-		std::istringstream in(": test 2 swap * ;");
+		std::istringstream in(": test 2 * dup + ;");
 		Lexer lexer(in);
 		lexer.NextToken();
 

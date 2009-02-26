@@ -93,12 +93,22 @@ public:
 	}
 	void Compile(Module *module)
 	{
-		std::vector<const Type *> args(InputSize() + OutputSize(), IntegerType::get(32));
-		for(int i = InputSize(); i < args.size(); i++)
-			args[i] = PointerType::get(IntegerType::get(32), 0);
+		std::vector<const Type *> args(InputSize(), IntegerType::get(32));
 
-		FunctionType *function_type = FunctionType::get(Type::VoidTy, args, false);
+		const Type *ret_type;
+		switch(OutputSize())
+		{
+			case 0: ret_type = Type::VoidTy; break;
+			case 1: ret_type = IntegerType::get(32); break;
+			default:
+				std::vector<const Type *> ret_args(OutputSize(), IntegerType::get(32));
+				ret_type = StructType::get(ret_args);
+				break;
+		}
+
+		FunctionType *function_type = FunctionType::get(ret_type, args, false);
 		Function *function = Function::Create(function_type, Function::ExternalLinkage, name, module);
+		function_type->dump();
 
 		BasicBlock *entry = BasicBlock::Create("entry", function);
 		IRBuilder<> builder(entry);
@@ -112,32 +122,22 @@ public:
 			arg_it->setName(oss.str());
 			arg_it++;
 		}
-		for(int i = 0; i < OutputSize(); i++)
-		{
-			std::ostringstream oss;
-			oss << "out" << i;
-			arg_it->setName(oss.str());
-			arg_it++;
-		}
 
-		// arg_it = output args
-		arg_it = function->arg_begin();
-		for(int i = 0; i < InputSize(); i++)
-		{
-			std::ostringstream oss;
-			oss << "inp" << i;
-			arg_it->setName(oss.str());
-			arg_it++;
-		}
-
+		Value *rets[OutputSize()];
+		int ret_index = 0;
 		for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
 		{
 			AST *ast = *it;
 			for(int i = 0; i < ast->OutputSize(); i++)
-				builder.CreateStore(ast->GetValue(i, builder), arg_it++);
+				rets[ret_index++] = ast->GetValue(i, builder);
 		}
 
-		builder.CreateRetVoid();
+		switch(OutputSize())
+		{
+			case 0: builder.CreateRetVoid(); break;
+			case 1: builder.CreateRet(rets[0]); break;
+			default: builder.CreateAggregateRet(rets, OutputSize()); break;
+		}
 	}
 };
 
