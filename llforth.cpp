@@ -170,16 +170,19 @@ public:
 
 // --- Parser ---
 
-class Parser
+class InferenceStack
 {
 public:
-	Lexer lexer;
-	typedef std::list<FunctionAST *> Functions;
-	Functions functions;
 	BodyAST stack;
 	BodyAST args;
 
-	Parser(Lexer &_lexer) : lexer(_lexer) { }
+	InferenceStack() { }
+
+	void Clear()
+	{
+		stack.clear();
+		args.clear();
+	}
 
 	BodyAST *Pop(int size)
 	{
@@ -203,6 +206,22 @@ public:
 		return func_args;
 	}
 
+	void Push(AST *ast)
+	{
+		stack.push_back(ast);
+	}
+};
+
+class Parser
+{
+public:
+	Lexer lexer;
+	typedef std::list<FunctionAST *> Functions;
+	Functions functions;
+	InferenceStack istack;
+
+	Parser(Lexer &_lexer) : lexer(_lexer) { }
+
 	FunctionAST *FindFunction(const std::string &word)
 	{
 		Functions::reverse_iterator it = functions.rbegin();
@@ -224,8 +243,8 @@ public:
 		FunctionAST *function = FindFunction(func_name);
 		assert(function != NULL);
 
-		AST *call = new CallAST(function, Pop(function->InputSize()));
-		stack.push_back(call);
+		AST *call = new CallAST(function, istack.Pop(function->InputSize()));
+		istack.Push(call);
 	}
 
 	AST *AppendCore()
@@ -235,13 +254,13 @@ public:
 
 		if(word == "dup")
 		{
-			AST *dup = new DupAST(Pop(1));
-			stack.push_back(dup);
+			AST *dup = new DupAST(istack.Pop(1));
+			istack.Push(dup);
 		}
 		else if(word == "*")
 		{
-			AST *mult = new MultAST(Pop(2));
-			stack.push_back(mult);
+			AST *mult = new MultAST(istack.Pop(2));
+			istack.Push(mult);
 		}
 		else
 		{
@@ -258,7 +277,7 @@ public:
 		lexer.NextToken();
 
 		AST *ast = new IntegerAST(integer);
-		stack.push_back(ast);
+		istack.Push(ast);
 	}
 
 	void ParseWordExpr()
@@ -282,8 +301,7 @@ public:
 
 	void ParseBody(const std::string &end)
 	{
-		args.clear();
-		stack.clear();
+		istack.Clear();
 		do
 		{
 			if(lexer.word == end)
@@ -305,11 +323,11 @@ public:
 		ParseBody(";");
 
 		BodyAST *func_body = new BodyAST();
-		for(BodyAST::iterator it = stack.begin(); it != stack.end(); it++)
+		for(BodyAST::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
 			func_body->push_back(*it);
 
 		BodyAST *func_args = new BodyAST();
-		for(BodyAST::iterator it = args.begin(); it != args.end(); it++)
+		for(BodyAST::iterator it = istack.args.begin(); it != istack.args.end(); it++)
 			func_args->push_back(*it);
 
 		return new FunctionAST(func_name, func_body, func_args);
