@@ -19,12 +19,13 @@ int main(int argc, char **argv)
 {
 	try
 	{
-		std::istringstream in(": test dup * 5 + ; : test2 dup + + 5 ;");
+		std::istringstream in(": test 5 2 swap ;");
 		Lexer lexer(in);
 		lexer.NextToken();
 
 		Parser parser(lexer);
 		parser.MainLoop();
+		parser.Compile();
 	}
 	catch(std::string &error)
 	{

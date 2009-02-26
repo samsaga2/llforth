@@ -3,10 +3,28 @@
 class AST
 {
 public:
+	AST() : compiled(false) { }
+	Value *GetValue(int index, IRBuilder<> builder)
+	{
+		if(!compiled)
+		{
+			Compile(builder);
+			compiled = true;
+		}
+		return values[index];
+	}
 	virtual int InputSize() = 0;
 	virtual int OutputSize() = 0;
 	virtual void Print() = 0;
 	virtual ~AST() { }
+protected:
+	bool compiled;
+	std::vector<Value *> values;
+	void PushValue(Value *value)
+	{
+		values.push_back(value);
+	}
+	virtual void Compile(IRBuilder<> builder) = 0;
 };
 
 class IntegerAST : public AST
@@ -18,6 +36,11 @@ public:
 	int InputSize() { return 0; }
 	int OutputSize() { return 1; }
 	void Print() { std::cout << integer; }
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		PushValue(ConstantInt::get(APInt(32, integer)));
+	}
 };
 
 class BodyAST : public std::list<AST *>
@@ -40,7 +63,7 @@ public:
 	}
 };
 
-class FunctionAST : public AST
+class FunctionAST
 {
 	std::string name;
 	BodyAST *body;
@@ -68,6 +91,54 @@ public:
 		
 		std::cout << std::endl << std::endl;
 	}
+	void Compile(Module *module)
+	{
+		std::vector<const Type *> args(InputSize() + OutputSize(), IntegerType::get(32));
+		for(int i = InputSize(); i < args.size(); i++)
+			args[i] = PointerType::get(IntegerType::get(32), 0);
+
+		FunctionType *function_type = FunctionType::get(Type::VoidTy, args, false);
+		Function *function = Function::Create(function_type, Function::ExternalLinkage, name, module);
+
+		BasicBlock *entry = BasicBlock::Create("entry", function);
+		IRBuilder<> builder(entry);
+
+		// arg names
+		Function::arg_iterator arg_it = function->arg_begin();
+		for(int i = 0; i < InputSize(); i++)
+		{
+			std::ostringstream oss;
+			oss << "inp" << i;
+			arg_it->setName(oss.str());
+			arg_it++;
+		}
+		for(int i = 0; i < OutputSize(); i++)
+		{
+			std::ostringstream oss;
+			oss << "out" << i;
+			arg_it->setName(oss.str());
+			arg_it++;
+		}
+
+		// arg_it = output args
+		arg_it = function->arg_begin();
+		for(int i = 0; i < InputSize(); i++)
+		{
+			std::ostringstream oss;
+			oss << "inp" << i;
+			arg_it->setName(oss.str());
+			arg_it++;
+		}
+
+		for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
+		{
+			AST *ast = *it;
+			for(int i = 0; i < ast->OutputSize(); i++)
+				builder.CreateStore(ast->GetValue(i, builder), arg_it++);
+		}
+
+		builder.CreateRetVoid();
+	}
 };
 
 class CallAST : public AST
@@ -80,6 +151,8 @@ public:
 	int InputSize() { return function->InputSize(); }
 	int OutputSize() { return function->OutputSize(); }
 	void Print() { std::cout << function->Name(); }
+protected:
+	void Compile(IRBuilder<> builder) { std::cout << "call" << std::endl; }
 };
 
 class ArgAST : public AST
@@ -90,6 +163,15 @@ public:
 	int InputSize() { return 0; }
 	int OutputSize() { return 1; }
 	void Print() { std::cout << "arg" << n; }
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		BasicBlock *bb = builder.GetInsertBlock();
+		Function *f = bb->getParent();
+		Function::arg_iterator arg_it = f->arg_begin();
+		for(int i = 0; i < n; i++,arg_it++);
+		PushValue(arg_it);
+	}
 };
 
 class OutputIndexAST : public AST
@@ -112,6 +194,11 @@ public:
 			std::cout << "]:" << index;
 		}
 	}
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		PushValue(ast->GetValue(index, builder));
+	}
 };
 
 class DupAST : public AST
@@ -126,6 +213,12 @@ public:
 		arg1->Print();
 		std::cout << " ";
 		arg1->Print();
+	}
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		PushValue(arg1->GetValue(0, builder));
+		PushValue(arg1->GetValue(0, builder));
 	}
 };
 
@@ -145,6 +238,11 @@ public:
 		arg2->Print();
 		std::cout << ")";
 	}
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		PushValue(builder.CreateMul(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
+	}
 };
 
 class AddAST : public AST
@@ -162,6 +260,11 @@ public:
 		std::cout << "+";
 		arg2->Print();
 		std::cout << ")";
+	}
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		PushValue(builder.CreateAdd(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
 	}
 };
 

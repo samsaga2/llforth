@@ -6,7 +6,7 @@ LDFLAGS = `llvm-config --cxxflags --ldflags --libs core`
 
 all: llforth
 
-llforth: llforth.cpp
+llforth: llforth.cpp ast.h lexer.h parser.h
 	$(CC) $(LLFORTH_SRCS) -o llforth $(LDFLAGS) $(CFLAGS)
 
 clean:

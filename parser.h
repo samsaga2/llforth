@@ -104,6 +104,7 @@ public:
 
 		if(word == "dup")
 		{
+			OutputIndexAST *arg1 = istack.Pop();
 			AST *dup = new DupAST(istack.Pop());
 			istack.Push(dup);
 		}
@@ -206,6 +207,16 @@ public:
 				lexer.NextToken();
 			}
 		}
+	}
+
+	void Compile()
+	{
+		Module module("llforth");
+
+		for(Functions::iterator it = functions.begin(); it != functions.end(); it++)
+			(*it)->Compile(&module);
+	
+		module.dump();
 	}
 };
 
