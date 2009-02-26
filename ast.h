@@ -68,6 +68,7 @@ class FunctionAST
 	std::string name;
 	BodyAST *body;
 	BodyAST *args;
+	Function *function;
 public:
 	FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args)
 		: name(_name), body(_body), args(_args) { }
@@ -107,8 +108,7 @@ public:
 		}
 
 		FunctionType *function_type = FunctionType::get(ret_type, args, false);
-		Function *function = Function::Create(function_type, Function::ExternalLinkage, name, module);
-		function_type->dump();
+		function = Function::Create(function_type, Function::ExternalLinkage, name, module);
 
 		BasicBlock *entry = BasicBlock::Create("entry", function);
 		IRBuilder<> builder(entry);
@@ -139,6 +139,7 @@ public:
 			default: builder.CreateAggregateRet(rets, OutputSize()); break;
 		}
 	}
+	Function *CompiledFunction() { return function; }
 };
 
 class CallAST : public AST
@@ -152,7 +153,29 @@ public:
 	int OutputSize() { return function->OutputSize(); }
 	void Print() { std::cout << function->Name(); }
 protected:
-	void Compile(IRBuilder<> builder) { std::cout << "call" << std::endl; }
+	void Compile(IRBuilder<> builder)
+	{
+		Function *compiled_function = function->CompiledFunction();
+		std::vector<Value *> func_args;
+		for(BodyAST::iterator it = args->begin(); it != args->end(); it++)
+			for(int i = 0; i < (*it)->OutputSize(); i++)
+			{
+				Value *value = (*it)->GetValue(i, builder);
+				func_args.push_back(value);
+			}
+		Value *result = builder.CreateCall<std::vector<Value *>::iterator>(compiled_function, func_args.begin(), func_args.end());
+		switch(function->OutputSize())
+		{
+			case 0: break; // nothing
+			case 1: PushValue(result); break;
+			case 2: for(int i = 0; i < function->OutputSize(); i++)
+				{
+					Value *value = builder.CreateExtractValue(result, i);
+					PushValue(value);
+				}
+				break;
+		}
+	}
 };
 
 class ArgAST : public AST
