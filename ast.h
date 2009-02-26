@@ -268,3 +268,25 @@ protected:
 	}
 };
 
+class SwapAST : public AST
+{
+	OutputIndexAST *arg1;
+	OutputIndexAST *arg2;
+public:
+	SwapAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2) { }
+	int InputSize() { return 2; }
+	int OutputSize() { return 2; }
+	void Print()
+	{
+		arg2->Print();
+		std::cout << " ";
+		arg1->Print();
+	}
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		PushValue(arg2->GetValue(0, builder));
+		PushValue(arg1->GetValue(0, builder));
+	}
+};
+

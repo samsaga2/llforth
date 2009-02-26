@@ -105,22 +105,25 @@ public:
 		if(word == "dup")
 		{
 			OutputIndexAST *arg1 = istack.Pop();
-			AST *dup = new DupAST(istack.Pop());
-			istack.Push(dup);
+			istack.Push(new DupAST(arg1));
 		}
 		else if(word == "*")
 		{
 			OutputIndexAST *arg2 = istack.Pop();
 			OutputIndexAST *arg1 = istack.Pop();
-			AST *mult = new MultAST(arg1, arg2);
-			istack.Push(mult);
+			istack.Push(new MultAST(arg1, arg2));
 		}
 		else if(word == "+")
 		{
 			OutputIndexAST *arg2 = istack.Pop();
 			OutputIndexAST *arg1 = istack.Pop();
-			AST *add = new AddAST(arg1, arg2);
-			istack.Push(add);
+			istack.Push(new AddAST(arg1, arg2));
+		}
+		else if(word == "swap")
+		{
+			OutputIndexAST *arg2 = istack.Pop();
+			OutputIndexAST *arg1 = istack.Pop();
+			istack.Push(new SwapAST(arg1, arg2));
 		}
 		else
 		{
