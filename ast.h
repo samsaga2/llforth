@@ -20,9 +20,11 @@ public:
 protected:
 	bool compiled;
 	std::vector<Value *> values;
-	void PushValue(Value *value)
+	void SetValue(int index, Value *value)
 	{
-		values.push_back(value);
+		if(values.size() <= index)
+			values.resize(index + 1);
+		values[index] = value;
 	}
 	virtual void Compile(IRBuilder<> builder) = 0;
 };
@@ -39,7 +41,7 @@ public:
 protected:
 	void Compile(IRBuilder<> builder)
 	{
-		PushValue(ConstantInt::get(APInt(32, integer)));
+		SetValue(0, ConstantInt::get(APInt(32, integer)));
 	}
 };
 
@@ -167,12 +169,12 @@ protected:
 		switch(function->OutputSize())
 		{
 			case 0: break; // nothing
-			case 1: PushValue(result); break;
+			case 1: SetValue(0, result); break;
 			default:
 				for(int i = 0; i < function->OutputSize(); i++)
 				{
 					Value *value = builder.CreateExtractValue(result, i);
-					PushValue(value);
+					SetValue(i, value);
 				}
 				break;
 		}
@@ -194,7 +196,7 @@ protected:
 		Function *f = bb->getParent();
 		Function::arg_iterator arg_it = f->arg_begin();
 		for(int i = 0; i < n; i++,arg_it++);
-		PushValue(arg_it);
+		SetValue(0, arg_it);
 	}
 };
 
@@ -221,7 +223,7 @@ public:
 protected:
 	void Compile(IRBuilder<> builder)
 	{
-		PushValue(ast->GetValue(index, builder));
+		SetValue(0, ast->GetValue(index, builder));
 	}
 };
 
@@ -241,8 +243,8 @@ public:
 protected:
 	void Compile(IRBuilder<> builder)
 	{
-		PushValue(arg1->GetValue(0, builder));
-		PushValue(arg1->GetValue(0, builder));
+		SetValue(0, arg1->GetValue(0, builder));
+		SetValue(1, arg1->GetValue(0, builder));
 	}
 };
 
@@ -265,7 +267,7 @@ public:
 protected:
 	void Compile(IRBuilder<> builder)
 	{
-		PushValue(builder.CreateMul(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
+		SetValue(0, builder.CreateMul(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
 	}
 };
 
@@ -288,7 +290,7 @@ public:
 protected:
 	void Compile(IRBuilder<> builder)
 	{
-		PushValue(builder.CreateAdd(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
+		SetValue(0, builder.CreateAdd(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
 	}
 };
 
@@ -309,8 +311,8 @@ public:
 protected:
 	void Compile(IRBuilder<> builder)
 	{
-		PushValue(arg2->GetValue(0, builder));
-		PushValue(arg1->GetValue(0, builder));
+		SetValue(0, arg2->GetValue(0, builder));
+		SetValue(1, arg1->GetValue(0, builder));
 	}
 };
 
@@ -333,10 +335,36 @@ public:
 protected:
 	void Compile(IRBuilder<> builder)
 	{
-		PushValue(arg1->GetValue(0, builder));
-		PushValue(arg2->GetValue(0, builder));
-		PushValue(arg1->GetValue(0, builder));
+		SetValue(0, arg1->GetValue(0, builder));
+		SetValue(1, arg2->GetValue(0, builder));
+		SetValue(2, arg1->GetValue(0, builder));
 	}
 };
 
+class RotAST : public AST
+{
+	OutputIndexAST *arg1;
+	OutputIndexAST *arg2;
+	OutputIndexAST *arg3;
+public:
+	RotAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2, OutputIndexAST *_arg3)
+		: arg1(_arg1), arg2(_arg2), arg3(_arg3) { }
+	int InputSize() { return 3; }
+	int OutputSize() { return 3; }
+	void Print()
+	{
+		arg2->Print();
+		std::cout << " ";
+		arg3->Print();
+		std::cout << " ";
+		arg1->Print();
+	}
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		SetValue(0, arg1->GetValue(0, builder));
+		SetValue(2, arg2->GetValue(0, builder));
+		SetValue(1, arg3->GetValue(0, builder));
+	}
+};
 

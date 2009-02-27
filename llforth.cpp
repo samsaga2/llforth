@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 {
 	try
 	{
-		std::istringstream in(": test 1 2 over ; : test2 test * + ;");
+		std::istringstream in(": test 1 2 3 rot ; : test2 test + + ;");
 		Lexer lexer(in);
 		lexer.NextToken();
 

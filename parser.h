@@ -131,6 +131,13 @@ public:
 			OutputIndexAST *arg1 = istack.Pop();
 			istack.Push(new OverAST(arg1, arg2));
 		}
+		else if(word == "rot")
+		{
+			OutputIndexAST *arg3 = istack.Pop();
+			OutputIndexAST *arg2 = istack.Pop();
+			OutputIndexAST *arg1 = istack.Pop();
+			istack.Push(new RotAST(arg1, arg2, arg3));
+		}
 		else
 		{
 			std::string error("unknown token `");
@@ -237,7 +244,6 @@ public:
 		pm.add(createPromoteMemoryToRegisterPass());
 		pm.add(createCFGSimplificationPass());
 		pm.run(module);
-	
 	
 		module.dump();
 	}
