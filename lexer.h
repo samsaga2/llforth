@@ -1,5 +1,7 @@
 #pragma once
 
+#include <istream>
+
 class Lexer
 {
 public:
@@ -15,22 +17,8 @@ public:
 	std::string word;
 	int integer;
 
-	Lexer(std::istream &_in) : in(_in) { }
+	Lexer(std::istream &_in);
 
-	void NextToken()
-	{
-		if(in.eof())
-			token = tok_eof;
-		else
-		{
-			in >> word; 
-
-			std::istringstream iss(word);
-			if(iss >> integer)
-				token = tok_integer;
-			else
-				token = tok_word;
-		}
-	}
+	void NextToken();
 };
 

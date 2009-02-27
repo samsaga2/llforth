@@ -1,14 +1,19 @@
-LLFORTH_SRCS = llforth.cpp
+OBJECTS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
 CC = g++
-CFLAGS = -g
-LDFLAGS = `llvm-config --cxxflags --ldflags --libs` -Wno-deprecated
+CFLAGS = -g -Wno-deprecated `llvm-config --cxxflags`
+LDFLAGS = `llvm-config --ldflags --libs`
+
+.SUFFIXES:	.o .cpp
+
+.cpp.o:
+	$(CC) -c $< $(CFLAGS)
 
 all: llforth
 
-llforth: llforth.cpp ast.h lexer.h parser.h
-	$(CC) $(LLFORTH_SRCS) -o llforth $(LDFLAGS) $(CFLAGS)
+llforth: $(OBJECTS)
+	$(CC) $(OBJECTS) -o llforth $(LDFLAGS) $(CFLAGS)
 
 clean:
 	rm -f *.o llforth
-	
+

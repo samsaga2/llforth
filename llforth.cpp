@@ -1,19 +1,5 @@
 #include <iostream>
-#include <list>
 #include <sstream>
-#include <assert.h>
-#include <llvm/Module.h>
-#include <llvm/PassManager.h>
-#include <llvm/Assembly/PrintModulePass.h>
-#include <llvm/Function.h>
-#include <llvm/CallingConv.h>
-#include <llvm/Support/IRBuilder.h>
-#include <llvm/CodeGen/Passes.h>
-#include <llvm/LinkAllPasses.h>
-#include <llvm/Target/TargetData.h>
-
-using namespace llvm;
-
 #include "lexer.h"
 #include "ast.h"
 #include "parser.h"

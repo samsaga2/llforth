@@ -1,18 +1,15 @@
 #pragma once
 
+#include <llvm/Support/IRBuilder.h>
+#include <list>
+
+using namespace llvm;
+
 class AST
 {
 public:
-	AST() : compiled(false) { }
-	Value *GetValue(int index, IRBuilder<> builder)
-	{
-		if(!compiled)
-		{
-			Compile(builder);
-			compiled = true;
-		}
-		return values[index];
-	}
+	AST();
+	Value *GetValue(int index, IRBuilder<> builder);
 	virtual int InputSize() = 0;
 	virtual int OutputSize() = 0;
 	virtual void Print() = 0;
@@ -20,12 +17,7 @@ public:
 protected:
 	bool compiled;
 	std::vector<Value *> values;
-	void SetValue(int index, Value *value)
-	{
-		if(values.size() <= index)
-			values.resize(index + 1);
-		values[index] = value;
-	}
+	void SetValue(int index, Value *value);
 	virtual void Compile(IRBuilder<> builder) = 0;
 };
 
@@ -33,36 +25,19 @@ class IntegerAST : public AST
 {
 	int integer;
 public:
-	IntegerAST(int _integer)
-		: integer(_integer) { }
-	int InputSize() { return 0; }
-	int OutputSize() { return 1; }
-	void Print() { std::cout << integer; }
+	IntegerAST(int _integer);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		SetValue(0, ConstantInt::get(APInt(32, integer)));
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class BodyAST : public std::list<AST *>
 {
 public:
-	int OutputSize()
-	{
-		int output_size = 0;
-		for(BodyAST::iterator it = this->begin(); it != this->end(); it++)
-			output_size += (*it)->OutputSize();
-		return output_size;
-	}
-	void Print()
-	{
-		for(BodyAST::iterator it = this->begin(); it != this->end(); it++)
-		{
-			std::cout << " ";
-			(*it)->Print();
-		}
-	}
+	int OutputSize();
+	void Print();
 };
 
 class FunctionAST
@@ -72,76 +47,13 @@ class FunctionAST
 	BodyAST *args;
 	Function *function;
 public:
-	FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args)
-		: name(_name), body(_body), args(_args) { }
-	const std::string Name() { return name; }
-	int InputSize() { return args->OutputSize(); }
-	int OutputSize() { return body->OutputSize(); }
-	void Print()
-	{
-		std::cout << name << " ";
-		for(int i = 0; i < args->OutputSize(); i++)
-			std::cout << " n";
-		std::cout << " -- ";
-		for(int i = 0; i < body->OutputSize(); i++)
-			std::cout << " n";
-
-		for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
-		{
-			std::cout << std::endl << "  ";
-			(*it)->Print();
-		}
-		
-		std::cout << std::endl << std::endl;
-	}
-	void Compile(Module *module)
-	{
-		std::vector<const Type *> args(InputSize(), IntegerType::get(32));
-
-		const Type *ret_type;
-		switch(OutputSize())
-		{
-			case 0: ret_type = Type::VoidTy; break;
-			case 1: ret_type = IntegerType::get(32); break;
-			default:
-				std::vector<const Type *> ret_args(OutputSize(), IntegerType::get(32));
-				ret_type = StructType::get(ret_args);
-				break;
-		}
-
-		FunctionType *function_type = FunctionType::get(ret_type, args, false);
-		function = Function::Create(function_type, Function::ExternalLinkage, name, module);
-
-		BasicBlock *entry = BasicBlock::Create("entry", function);
-		IRBuilder<> builder(entry);
-
-		// arg names
-		Function::arg_iterator arg_it = function->arg_begin();
-		for(int i = 0; i < InputSize(); i++)
-		{
-			std::ostringstream oss;
-			oss << "inp" << i;
-			arg_it->setName(oss.str());
-			arg_it++;
-		}
-
-		Value *rets[OutputSize()];
-		int ret_index = 0;
-		for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
-		{
-			AST *ast = *it;
-			for(int i = 0; i < ast->OutputSize(); i++)
-				rets[ret_index++] = ast->GetValue(i, builder);
-		}
-
-		switch(OutputSize())
-		{
-			case 0: builder.CreateRetVoid(); break;
-			case 1: builder.CreateRet(rets[0]); break;
-			default: builder.CreateAggregateRet(rets, OutputSize()); break;
-		}
-	}
-	Function *CompiledFunction() { return function; }
+	FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args);
+	const std::string Name();
+	int InputSize();
+	int OutputSize();
+	void Print();
+	void Compile(Module *module);
+	Function *CompiledFunction();
 };
 
 class CallAST : public AST
@@ -149,55 +61,24 @@ class CallAST : public AST
 	FunctionAST *function;
 	BodyAST *args;
 public:
-	CallAST(FunctionAST *_function, BodyAST *_args)
-		: function(_function), args(_args) { }
-	int InputSize() { return function->InputSize(); }
-	int OutputSize() { return function->OutputSize(); }
-	void Print() { std::cout << function->Name(); }
+	CallAST(FunctionAST *_function, BodyAST *_args);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		Function *compiled_function = function->CompiledFunction();
-		std::vector<Value *> func_args;
-		for(BodyAST::iterator it = args->begin(); it != args->end(); it++)
-			for(int i = 0; i < (*it)->OutputSize(); i++)
-			{
-				Value *value = (*it)->GetValue(i, builder);
-				func_args.push_back(value);
-			}
-		Value *result = builder.CreateCall<std::vector<Value *>::iterator>(compiled_function, func_args.begin(), func_args.end());
-		switch(function->OutputSize())
-		{
-			case 0: break; // nothing
-			case 1: SetValue(0, result); break;
-			default:
-				for(int i = 0; i < function->OutputSize(); i++)
-				{
-					Value *value = builder.CreateExtractValue(result, i);
-					SetValue(i, value);
-				}
-				break;
-		}
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class ArgAST : public AST
 {
 	int n;
 public:
-	ArgAST(int _n) : n(_n) { }
-	int InputSize() { return 0; }
-	int OutputSize() { return 1; }
-	void Print() { std::cout << "arg" << n; }
+	ArgAST(int _n);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		BasicBlock *bb = builder.GetInsertBlock();
-		Function *f = bb->getParent();
-		Function::arg_iterator arg_it = f->arg_begin();
-		for(int i = 0; i < n; i++,arg_it++);
-		SetValue(0, arg_it);
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class OutputIndexAST : public AST
@@ -205,47 +86,24 @@ class OutputIndexAST : public AST
 	AST *ast;
 	int index;
 public:
-	OutputIndexAST(AST *_ast, int _index)
-		: ast(_ast), index(_index) { }
-	int InputSize() { return 0; }
-	int OutputSize() { return 1; }
-	void Print()
-	{
-		if(ast->OutputSize() == 1)
-			ast->Print();
-		else
-		{
-			std::cout << "[";
-			ast->Print();
-			std::cout << "]:" << index;
-		}
-	}
+	OutputIndexAST(AST *_ast, int _index);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		SetValue(0, ast->GetValue(index, builder));
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class DupAST : public AST
 {
 	OutputIndexAST *arg1;
 public:
-	DupAST(OutputIndexAST *_arg1) : arg1(_arg1) { }
-	int InputSize() { return 1; }
-	int OutputSize() { return 2; }
-	void Print()
-	{
-		arg1->Print();
-		std::cout << " ";
-		arg1->Print();
-	}
+	DupAST(OutputIndexAST *_arg1);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		SetValue(0, arg1->GetValue(0, builder));
-		SetValue(1, arg1->GetValue(0, builder));
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class MultAST : public AST
@@ -253,22 +111,12 @@ class MultAST : public AST
 	OutputIndexAST *arg1;
 	OutputIndexAST *arg2;
 public:
-	MultAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2) { }
-	int InputSize() { return 2; }
-	int OutputSize() { return 1; }
-	void Print()
-	{
-		std::cout << "(";
-		arg1->Print();
-		std::cout << "*";
-		arg2->Print();
-		std::cout << ")";
-	}
+	MultAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		SetValue(0, builder.CreateMul(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class AddAST : public AST
@@ -276,22 +124,12 @@ class AddAST : public AST
 	OutputIndexAST *arg1;
 	OutputIndexAST *arg2;
 public:
-	AddAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2) { }
-	int InputSize() { return 2; }
-	int OutputSize() { return 1; }
-	void Print()
-	{
-		std::cout << "(";
-		arg1->Print();
-		std::cout << "+";
-		arg2->Print();
-		std::cout << ")";
-	}
+	AddAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		SetValue(0, builder.CreateAdd(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class SwapAST : public AST
@@ -299,21 +137,12 @@ class SwapAST : public AST
 	OutputIndexAST *arg1;
 	OutputIndexAST *arg2;
 public:
-	SwapAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2) { }
-	int InputSize() { return 2; }
-	int OutputSize() { return 2; }
-	void Print()
-	{
-		arg2->Print();
-		std::cout << " ";
-		arg1->Print();
-	}
+	SwapAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		SetValue(0, arg2->GetValue(0, builder));
-		SetValue(1, arg1->GetValue(0, builder));
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class OverAST : public AST
@@ -321,24 +150,12 @@ class OverAST : public AST
 	OutputIndexAST *arg1;
 	OutputIndexAST *arg2;
 public:
-	OverAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2) { }
-	int InputSize() { return 2; }
-	int OutputSize() { return 3; }
-	void Print()
-	{
-		arg1->Print();
-		std::cout << " ";
-		arg2->Print();
-		std::cout << " ";
-		arg1->Print();
-	}
+	OverAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		SetValue(0, arg1->GetValue(0, builder));
-		SetValue(1, arg2->GetValue(0, builder));
-		SetValue(2, arg1->GetValue(0, builder));
-	}
+	void Compile(IRBuilder<> builder);
 };
 
 class RotAST : public AST
@@ -347,24 +164,11 @@ class RotAST : public AST
 	OutputIndexAST *arg2;
 	OutputIndexAST *arg3;
 public:
-	RotAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2, OutputIndexAST *_arg3)
-		: arg1(_arg1), arg2(_arg2), arg3(_arg3) { }
-	int InputSize() { return 3; }
-	int OutputSize() { return 3; }
-	void Print()
-	{
-		arg2->Print();
-		std::cout << " ";
-		arg3->Print();
-		std::cout << " ";
-		arg1->Print();
-	}
+	RotAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2, OutputIndexAST *_arg3);
+	int InputSize();
+	int OutputSize();
+	void Print();
 protected:
-	void Compile(IRBuilder<> builder)
-	{
-		SetValue(0, arg1->GetValue(0, builder));
-		SetValue(2, arg2->GetValue(0, builder));
-		SetValue(1, arg3->GetValue(0, builder));
-	}
+	void Compile(IRBuilder<> builder);
 };
 
