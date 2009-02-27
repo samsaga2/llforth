@@ -41,7 +41,8 @@ void Parser::AppendFunction()
 	FunctionAST *function = FindFunction(func_name);
 	assert(function != NULL);
 
-	AST *call = new CallAST(function, istack.Pop(function->InputSize()));
+	BodyAST *args = istack.Pop(function->InputSize());
+	CallAST *call = new CallAST(function, args);
 	istack.Push(call);
 }
 

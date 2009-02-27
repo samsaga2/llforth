@@ -14,7 +14,7 @@ public:
 		Counter(AST *_ast) : ast(_ast), index(0) { }
 	};
 
-	std::vector<Counter*> stack;
+	std::list<Counter*> stack;
 	BodyAST args;
 
 	void Clear();

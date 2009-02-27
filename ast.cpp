@@ -183,11 +183,14 @@ void CallAST::Compile(IRBuilder<> builder)
 	Function *compiled_function = function->CompiledFunction();
 	std::vector<Value *> func_args;
 	for(BodyAST::iterator it = args->begin(); it != args->end(); it++)
-		for(int i = 0; i < (*it)->OutputSize(); i++)
+	{
+		AST* arg = *it;
+		for(int i = 0; i < arg->OutputSize(); i++)
 		{
-			Value *value = (*it)->GetValue(i, builder);
+			Value *value = arg->GetValue(i, builder);
 			func_args.push_back(value);
 		}
+	}
 	Value *result = builder.CreateCall<std::vector<Value *>::iterator>(compiled_function, func_args.begin(), func_args.end());
 	switch(function->OutputSize())
 	{
