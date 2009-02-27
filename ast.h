@@ -168,7 +168,8 @@ protected:
 		{
 			case 0: break; // nothing
 			case 1: PushValue(result); break;
-			case 2: for(int i = 0; i < function->OutputSize(); i++)
+			default:
+				for(int i = 0; i < function->OutputSize(); i++)
 				{
 					Value *value = builder.CreateExtractValue(result, i);
 					PushValue(value);
@@ -312,4 +313,30 @@ protected:
 		PushValue(arg1->GetValue(0, builder));
 	}
 };
+
+class OverAST : public AST
+{
+	OutputIndexAST *arg1;
+	OutputIndexAST *arg2;
+public:
+	OverAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2) { }
+	int InputSize() { return 2; }
+	int OutputSize() { return 3; }
+	void Print()
+	{
+		arg1->Print();
+		std::cout << " ";
+		arg2->Print();
+		std::cout << " ";
+		arg1->Print();
+	}
+protected:
+	void Compile(IRBuilder<> builder)
+	{
+		PushValue(arg1->GetValue(0, builder));
+		PushValue(arg2->GetValue(0, builder));
+		PushValue(arg1->GetValue(0, builder));
+	}
+};
+
 

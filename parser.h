@@ -125,6 +125,12 @@ public:
 			OutputIndexAST *arg1 = istack.Pop();
 			istack.Push(new SwapAST(arg1, arg2));
 		}
+		else if(word == "over")
+		{
+			OutputIndexAST *arg2 = istack.Pop();
+			OutputIndexAST *arg1 = istack.Pop();
+			istack.Push(new OverAST(arg1, arg2));
+		}
 		else
 		{
 			std::string error("unknown token `");
