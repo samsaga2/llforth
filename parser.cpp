@@ -87,6 +87,12 @@ AST *Parser::AppendCore()
 		OutputIndexAST *arg1 = istack.Pop();
 		istack.Push(new RotAST(arg1, arg2, arg3));
 	}
+	else if(word == "\"")
+	{
+		lexer.ReadUntil(34);
+		istack.Push(new StringAST(lexer.word));
+		lexer.NextToken();
+	}
 	else
 	{
 		std::string error("unknown token `");

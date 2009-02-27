@@ -28,6 +28,18 @@ IntegerAST::IntegerAST(int _integer) : integer(_integer)
 {
 }
 
+TypeAST IntegerAST::InputType(int index)
+{
+	assert(false);
+	return TYPE_NULL;
+}
+
+TypeAST IntegerAST::OutputType(int index)
+{
+	assert(index == 0);
+	return TYPE_INT32;
+}
+
 int IntegerAST::InputSize()
 {
 	return 0;
@@ -38,13 +50,51 @@ int IntegerAST::OutputSize()
 	return 1;
 }
 
-void IntegerAST::Print() {
+void IntegerAST::Print()
+{
 	std::cout << integer;
 }
 
 void IntegerAST::Compile(IRBuilder<> builder)
 {
 	SetValue(0, ConstantInt::get(APInt(32, integer)));
+}
+
+/// StringAST
+StringAST::StringAST(const std::string &_str) : str(_str)
+{
+}
+
+TypeAST StringAST::InputType(int index)
+{
+	assert(false);
+	return TYPE_NULL;
+}
+
+TypeAST StringAST::OutputType(int index)
+{
+	assert(index == 0);
+	return TYPE_STRING;
+}
+
+int StringAST::InputSize()
+{
+	return 0;
+}
+
+int StringAST::OutputSize()
+{
+	return 1;
+}
+
+void StringAST::Print()
+{
+	std::cout << "\"" << str << "\"";
+}
+
+void StringAST::Compile(IRBuilder<> builder)
+{
+	SetValue(0, builder.CreateGlobalStringPtr(str.c_str()));
 }
 
 /// BodyAST
@@ -65,6 +115,17 @@ void BodyAST::Print()
 	}
 }
 
+AST *BodyAST::operator[](size_t index)
+{
+	BodyAST::iterator it = this->begin();
+	while(it != this->end() && index > 0)
+	{
+		index--;
+		it++;
+	}
+	return (*it);
+}
+
 /// FunctionAST
 FunctionAST::FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args)
 	: name(_name), body(_body), args(_args)
@@ -74,6 +135,26 @@ FunctionAST::FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_arg
 const std::string FunctionAST::Name()
 {
 	return name;
+}
+
+TypeAST FunctionAST::InputType(int index)
+{
+	if(args->size() == 0)
+		assert(false);
+	else
+		assert(index < args->size());
+
+	return (*args)[index]->InputType(0);
+}
+
+TypeAST FunctionAST::OutputType(int index)
+{
+	if(body->size() == 0)
+		assert(false);
+	else
+		assert(index < body->size());
+
+	return (*body)[index]->OutputType(0);
 }
 
 int FunctionAST::InputSize()
@@ -86,14 +167,27 @@ int FunctionAST::OutputSize()
 	return body->OutputSize();
 }
 
+void PrintType(TypeAST t)
+{
+	switch(t)
+	{
+		case TYPE_NULL: std::cout << " *"; break;
+		case TYPE_INT32: std::cout << " i"; break;
+		case TYPE_STRING: std::cout << " s"; break;
+	}
+}
+
 void FunctionAST::Print()
 {
 	std::cout << name << " ";
+
 	for(int i = 0; i < args->OutputSize(); i++)
-		std::cout << " n";
+		PrintType((*args)[i]->InputType(0));
+
 	std::cout << " -- ";
+
 	for(int i = 0; i < body->OutputSize(); i++)
-		std::cout << " n";
+		PrintType((*body)[i]->OutputType(0));
 
 	for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
 	{
@@ -104,17 +198,41 @@ void FunctionAST::Print()
 	std::cout << std::endl << std::endl;
 }
 
+const Type *FunctionAST::ConvertType(TypeAST t)
+{
+	switch(t)
+	{
+		case TYPE_NULL:
+			throw std::string("not supported");
+
+		case TYPE_INT32:
+			return Type::Int32Ty;
+
+		case TYPE_STRING:
+			return PointerType::getUnqual(Type::Int8Ty);
+			//return ArrayType::get(Type::Int8Ty, 5);
+	}
+}
+
 void FunctionAST::Compile(Module *module)
 {
-	std::vector<const Type *> args(InputSize(), IntegerType::get(32));
+	std::vector<const Type *> args(InputSize());
+	for(size_t i = 0; i < args.size(); i++)
+		args[i] = ConvertType(InputType(i));
 
 	const Type *ret_type;
 	switch(OutputSize())
 	{
-		case 0: ret_type = Type::VoidTy; break;
-		case 1: ret_type = IntegerType::get(32); break;
+		case 0:
+			ret_type = Type::VoidTy;
+			break;
+		case 1:
+			ret_type = ConvertType(OutputType(0));
+			break;
 		default:
-			std::vector<const Type *> ret_args(OutputSize(), IntegerType::get(32));
+			std::vector<const Type *> ret_args(OutputSize());
+			for(size_t i = 0; i < ret_args.size(); i++)
+				ret_args[i] = ConvertType(OutputType(i));
 			ret_type = StructType::get(ret_args);
 			break;
 	}
@@ -135,6 +253,7 @@ void FunctionAST::Compile(Module *module)
 		arg_it++;
 	}
 
+	assert(OutputSize() == body->size());
 	Value *rets[OutputSize()];
 	int ret_index = 0;
 	for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
@@ -143,12 +262,19 @@ void FunctionAST::Compile(Module *module)
 		for(int i = 0; i < ast->OutputSize(); i++)
 			rets[ret_index++] = ast->GetValue(i, builder);
 	}
+	assert(ret_index == OutputSize());
 
 	switch(OutputSize())
 	{
-		case 0: builder.CreateRetVoid(); break;
-		case 1: builder.CreateRet(rets[0]); break;
-		default: builder.CreateAggregateRet(rets, OutputSize()); break;
+		case 0:
+			builder.CreateRetVoid();
+			break;
+		case 1:
+			builder.CreateRet(rets[0]);
+			break;
+		default:
+			builder.CreateAggregateRet(rets, OutputSize());
+			break;
 	}
 }
 
@@ -161,6 +287,16 @@ Function *FunctionAST::CompiledFunction()
 CallAST::CallAST(FunctionAST *_function, BodyAST *_args)
 	: function(_function), args(_args)
 {
+}
+
+TypeAST CallAST::InputType(int index)
+{
+	return function->InputType(index);
+}
+
+TypeAST CallAST::OutputType(int index)
+{
+	return function->OutputType(index);
 }
 
 int CallAST::InputSize()
@@ -211,6 +347,18 @@ ArgAST::ArgAST(int _n) : n(_n)
 {
 }
 
+TypeAST ArgAST::InputType(int index)
+{
+	assert(false);
+	return TYPE_NULL;
+}
+
+TypeAST ArgAST::OutputType(int index)
+{
+	assert(index == 0);
+	return TYPE_INT32; // TODO inferir el tipo de argumento segun donde se use en el codigo
+}
+
 int ArgAST::InputSize()
 {
 	return 0;
@@ -239,6 +387,17 @@ void ArgAST::Compile(IRBuilder<> builder)
 OutputIndexAST::OutputIndexAST(AST *_ast, int _index)
 	: ast(_ast), index(_index)
 {
+}
+
+TypeAST OutputIndexAST::InputType(int index)
+{
+	assert(false);
+	return TYPE_NULL;
+}
+
+TypeAST OutputIndexAST::OutputType(int index)
+{
+	return ast->OutputType(index);
 }
 
 int OutputIndexAST::InputSize()
@@ -273,6 +432,18 @@ DupAST::DupAST(OutputIndexAST *_arg1) : arg1(_arg1)
 {
 }
 
+TypeAST DupAST::InputType(int index)
+{
+	assert(index == 0);
+	return arg1->OutputType(0);
+}
+
+TypeAST DupAST::OutputType(int index)
+{
+	assert(index == 0 || index == 1);
+	return arg1->OutputType(0);
+}
+
 int DupAST::InputSize()
 {
 	return 1;
@@ -299,6 +470,18 @@ void DupAST::Compile(IRBuilder<> builder)
 /// MultAST
 MultAST::MultAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2)
 {
+}
+
+TypeAST MultAST::InputType(int index)
+{
+	assert(index == 0 || index == 1);
+	return TYPE_INT32;
+}
+
+TypeAST MultAST::OutputType(int index)
+{
+	assert(index == 0);
+	return TYPE_INT32;
 }
 
 int MultAST::InputSize()
@@ -330,6 +513,18 @@ AddAST::AddAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2
 {
 }
 
+TypeAST AddAST::InputType(int index)
+{
+	assert(index == 0 || index == 1);
+	return TYPE_INT32;
+}
+
+TypeAST AddAST::OutputType(int index)
+{
+	assert(index == 0);
+	return TYPE_INT32;
+}
+
 int AddAST::InputSize()
 {
 	return 2;
@@ -359,6 +554,24 @@ SwapAST::SwapAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), ar
 {
 }
 
+TypeAST SwapAST::InputType(int index)
+{
+	assert(index == 0 || index == 1);
+	if(index == 0)
+		return arg1->OutputType(0);
+	else
+		return arg2->OutputType(0);
+}
+
+TypeAST SwapAST::OutputType(int index)
+{
+	assert(index == 0 || index == 1);
+	if(index == 0)
+		return arg2->OutputType(0);
+	else
+		return arg1->OutputType(0);
+}
+
 int SwapAST::InputSize()
 {
 	return 2;
@@ -385,6 +598,24 @@ void SwapAST::Compile(IRBuilder<> builder)
 // OverAST
 OverAST::OverAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2)
 {
+}
+
+TypeAST OverAST::InputType(int index)
+{
+	assert(index == 0 || index == 1);
+	if(index == 0)
+		return arg1->OutputType(0);
+	else
+		return arg2->OutputType(0);
+}
+
+TypeAST OverAST::OutputType(int index)
+{
+	assert(index >= 0 && index <= 2);
+	if(index == 0 || index == 2)
+		return arg1->OutputType(0);
+	else
+		return arg2->OutputType(0);
 }
 
 int OverAST::InputSize()
@@ -417,6 +648,28 @@ void OverAST::Compile(IRBuilder<> builder)
 RotAST::RotAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2, OutputIndexAST *_arg3)
 	: arg1(_arg1), arg2(_arg2), arg3(_arg3)
 {
+}
+
+TypeAST RotAST::InputType(int index)
+{
+	assert(index >= 0 && index <= 2);
+	if(index == 0)
+		return arg1->OutputType(0);
+	else if(index == 1)
+		return arg2->OutputType(0);
+	else
+		return arg3->OutputType(0);
+}
+
+TypeAST RotAST::OutputType(int index)
+{
+	assert(index >= 0 && index <= 2);
+	if(index == 0)
+		return arg2->OutputType(0);
+	else if(index == 1)
+		return arg3->OutputType(0);
+	else
+		return arg1->OutputType(0);
 }
 
 int RotAST::InputSize()

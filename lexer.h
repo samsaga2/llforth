@@ -20,5 +20,6 @@ public:
 	Lexer(std::istream &_in);
 
 	void NextToken();
+	void ReadUntil(char u);
 };
 

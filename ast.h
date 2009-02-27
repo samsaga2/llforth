@@ -5,11 +5,20 @@
 
 using namespace llvm;
 
+enum TypeAST
+{
+	TYPE_NULL,
+	TYPE_INT32,
+	TYPE_STRING
+};
+
 class AST
 {
 public:
 	AST();
 	Value *GetValue(int index, IRBuilder<> builder);
+	virtual TypeAST InputType(int index) = 0;
+	virtual TypeAST OutputType(int index) = 0;
 	virtual int InputSize() = 0;
 	virtual int OutputSize() = 0;
 	virtual void Print() = 0;
@@ -26,6 +35,22 @@ class IntegerAST : public AST
 	int integer;
 public:
 	IntegerAST(int _integer);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
+	int InputSize();
+	int OutputSize();
+	void Print();
+protected:
+	void Compile(IRBuilder<> builder);
+};
+
+class StringAST : public AST
+{
+	std::string str;
+public:
+	StringAST(const std::string &str);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -38,6 +63,7 @@ class BodyAST : public std::list<AST *>
 public:
 	int OutputSize();
 	void Print();
+	AST *operator[](size_t index);
 };
 
 class FunctionAST
@@ -49,11 +75,15 @@ class FunctionAST
 public:
 	FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args);
 	const std::string Name();
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
 	void Compile(Module *module);
 	Function *CompiledFunction();
+private:
+	const Type *ConvertType(TypeAST t);
 };
 
 class CallAST : public AST
@@ -62,6 +92,8 @@ class CallAST : public AST
 	BodyAST *args;
 public:
 	CallAST(FunctionAST *_function, BodyAST *_args);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -74,6 +106,8 @@ class ArgAST : public AST
 	int n;
 public:
 	ArgAST(int _n);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -87,6 +121,8 @@ class OutputIndexAST : public AST
 	int index;
 public:
 	OutputIndexAST(AST *_ast, int _index);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -99,6 +135,8 @@ class DupAST : public AST
 	OutputIndexAST *arg1;
 public:
 	DupAST(OutputIndexAST *_arg1);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -112,6 +150,8 @@ class MultAST : public AST
 	OutputIndexAST *arg2;
 public:
 	MultAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -125,6 +165,8 @@ class AddAST : public AST
 	OutputIndexAST *arg2;
 public:
 	AddAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -138,6 +180,8 @@ class SwapAST : public AST
 	OutputIndexAST *arg2;
 public:
 	SwapAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -151,6 +195,8 @@ class OverAST : public AST
 	OutputIndexAST *arg2;
 public:
 	OverAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();
@@ -165,6 +211,8 @@ class RotAST : public AST
 	OutputIndexAST *arg3;
 public:
 	RotAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2, OutputIndexAST *_arg3);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
 	int InputSize();
 	int OutputSize();
 	void Print();

@@ -21,3 +21,24 @@ void Lexer::NextToken()
 	}
 }
 
+void Lexer::ReadUntil(char u)
+{
+	token = tok_word;
+	if(word[word.size() - 1] == u)
+	{
+		word.resize(word.size() - 1);
+		return;
+	}
+
+	do
+	{
+		char c = in.get();
+		if(c == u)
+			return;
+		word += c;
+	}
+	while(!in.eof());
+
+	token = tok_eof;
+}
+
