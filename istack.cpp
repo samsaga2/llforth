@@ -1,4 +1,9 @@
 #include "istack.h"
+#include <iostream>
+
+InferenceStack::Counter::Counter(AST *_ast) : ast(_ast), index(_ast->OutputSize())
+{
+}
 
 void InferenceStack::Clear()
 {
@@ -17,10 +22,9 @@ OutputIndexAST *InferenceStack::Pop()
 
 	assert(stack.size() != 0);
 	Counter *counter = stack.back();
-	OutputIndexAST *stack_index = new OutputIndexAST(counter->ast, counter->index);
+	OutputIndexAST *stack_index = new OutputIndexAST(counter->ast, --counter->index);
 
-	counter->index++;
-	if(counter->index == counter->ast->OutputSize())
+	if(counter->index == 0)
 	{
 		delete counter;
 		stack.pop_back();
@@ -42,5 +46,19 @@ BodyAST *InferenceStack::Pop(int size)
 void InferenceStack::Push(AST *ast)
 {
 	stack.push_back(new Counter(ast));
+}
+
+
+void InferenceStack::Print()
+{
+	std::cout << "<<stack<<" << std::endl;
+	int i = 0;
+	for(std::list<Counter *>::iterator it = stack.begin(); it != stack.end(); it++)
+	{
+		std::cout << "  " << i++ << ": idx:" << (*it)->index << " ";
+		(*it)->ast->Print();
+		std::cout << std::endl;
+	}
+	std::cout << ">>stack>>" << std::endl;
 }
 

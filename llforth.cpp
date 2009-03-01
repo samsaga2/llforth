@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 {
 	try
 	{
-		std::istringstream in(": test 3 \" hola\" ;");
+		std::istringstream in(": test 3 1 + \" hola\" swap ;");
 		Lexer lexer(in);
 		lexer.NextToken();
 

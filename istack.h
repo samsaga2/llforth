@@ -11,7 +11,7 @@ public:
 	public:
 		AST *ast;
 		int index;
-		Counter(AST *_ast) : ast(_ast), index(0) { }
+		Counter(AST *_ast);
 	};
 
 	std::list<Counter*> stack;
@@ -21,5 +21,6 @@ public:
 	OutputIndexAST *Pop();
 	BodyAST *Pop(int size);
 	void Push(AST *ast);
+	void Print();
 };
 

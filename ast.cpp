@@ -397,7 +397,8 @@ TypeAST OutputIndexAST::InputType(int index)
 
 TypeAST OutputIndexAST::OutputType(int index)
 {
-	return ast->OutputType(index);
+	assert(index == 0);
+	return ast->OutputType(this->index);
 }
 
 int OutputIndexAST::InputSize()
@@ -550,7 +551,7 @@ void AddAST::Compile(IRBuilder<> builder)
 }
 
 /// SwapAST
-SwapAST::SwapAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2)
+SwapAST::SwapAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg2), arg2(_arg1)
 {
 }
 
@@ -566,10 +567,11 @@ TypeAST SwapAST::InputType(int index)
 TypeAST SwapAST::OutputType(int index)
 {
 	assert(index == 0 || index == 1);
+
 	if(index == 0)
-		return arg2->OutputType(0);
-	else
 		return arg1->OutputType(0);
+	else
+		return arg2->OutputType(0);
 }
 
 int SwapAST::InputSize()
@@ -591,8 +593,8 @@ void SwapAST::Print()
 
 void SwapAST::Compile(IRBuilder<> builder)
 {
-	SetValue(0, arg2->GetValue(0, builder));
-	SetValue(1, arg1->GetValue(0, builder));
+	SetValue(0, arg1->GetValue(0, builder));
+	SetValue(1, arg2->GetValue(0, builder));
 }
 
 // OverAST
