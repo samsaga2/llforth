@@ -41,3 +41,11 @@ void Lexer::ReadUntil(char u)
 	token = tok_eof;
 }
 
+void Lexer::ReadLine()
+{
+	if(!std::getline(in, word))
+		token = tok_eof;
+	else
+		token = tok_word;
+}
+

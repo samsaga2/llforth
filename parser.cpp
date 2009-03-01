@@ -93,6 +93,11 @@ AST *Parser::AppendCore()
 		istack.Push(new StringAST(lexer.word));
 		lexer.NextToken();
 	}
+	else if(word == "--")
+	{
+		lexer.ReadLine();
+		lexer.NextToken();
+	}
 	else
 	{
 		std::string error("unknown token `");
@@ -170,6 +175,11 @@ void Parser::MainLoop()
 	{
 		if(lexer.token == Lexer::tok_eof)
 			break;
+		else if(lexer.word == "--")
+		{
+			lexer.ReadLine();
+			lexer.NextToken();
+		}
 		else
 		{
 			FunctionAST *function = ParseFunction();

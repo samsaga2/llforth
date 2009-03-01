@@ -21,5 +21,6 @@ public:
 
 	void NextToken();
 	void ReadUntil(char u);
+	void ReadLine();
 };
 

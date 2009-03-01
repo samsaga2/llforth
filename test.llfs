@@ -1,3 +1,4 @@
+-- test functions
 : test2 3 ;
 : test test2 " Hello world!" swap 1 + ;
 
