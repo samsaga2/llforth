@@ -13,6 +13,12 @@ void InferenceStack::Clear()
 
 OutputIndexAST *InferenceStack::Pop()
 {
+	while(stack.back()->index == 0)
+	{
+		delete stack.back();
+		stack.pop_back();
+	}
+
 	if(stack.size() == 0)
 	{
 		AST *arg = new ArgAST(args.size());

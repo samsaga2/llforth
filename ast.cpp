@@ -699,4 +699,39 @@ void RotAST::Compile(IRBuilder<> builder)
 	SetValue(2, arg2->GetValue(0, builder));
 	SetValue(1, arg3->GetValue(0, builder));
 }
+//
+/// DropAST
+DropAST::DropAST(OutputIndexAST *_arg1) : arg1(_arg1)
+{
+}
+
+TypeAST DropAST::InputType(int index)
+{
+	assert(index == 0);
+	return arg1->OutputType(0);
+}
+
+TypeAST DropAST::OutputType(int index)
+{
+	assert(false);
+	return TYPE_NULL;
+}
+
+int DropAST::InputSize()
+{
+	return 1;
+}
+
+int DropAST::OutputSize()
+{
+	return 0;
+}
+
+void DropAST::Print()
+{
+}
+
+void DropAST::Compile(IRBuilder<> builder)
+{
+}
 

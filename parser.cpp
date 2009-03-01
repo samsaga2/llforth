@@ -101,6 +101,7 @@ AST *Parser::AppendCore()
 	else if(word == "drop")
 	{
 		OutputIndexAST *arg1 = istack.Pop();
+		istack.Push(new DropAST(arg1));
 	}
 	else
 	{

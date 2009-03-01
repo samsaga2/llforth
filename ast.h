@@ -220,3 +220,17 @@ protected:
 	void Compile(IRBuilder<> builder);
 };
 
+class DropAST : public AST
+{
+	OutputIndexAST *arg1;
+public:
+	DropAST(OutputIndexAST *_arg1);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
+	int InputSize();
+	int OutputSize();
+	void Print();
+protected:
+	void Compile(IRBuilder<> builder);
+};
+
