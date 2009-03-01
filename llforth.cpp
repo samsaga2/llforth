@@ -1,5 +1,5 @@
 #include <iostream>
-#include <sstream>
+#include <fstream>
 #include "lexer.h"
 #include "ast.h"
 #include "parser.h"
@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 {
 	try
 	{
-		std::istringstream in(": test 3 1 + \" hola\" swap ;");
+		std::ifstream in("test.llfs");
 		Lexer lexer(in);
 		lexer.NextToken();
 
