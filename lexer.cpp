@@ -7,18 +7,17 @@ Lexer::Lexer(std::istream &_in) : in(_in)
 
 void Lexer::NextToken()
 {
-	if(in.eof())
-		token = tok_eof;
-	else
+	if(!(in >> word))
 	{
-		in >> word; 
-
-		std::istringstream iss(word);
-		if(iss >> integer)
-			token = tok_integer;
-		else
-			token = tok_word;
+		token = tok_eof;
+		return;
 	}
+
+	std::istringstream iss(word);
+	if(iss >> integer)
+		token = tok_integer;
+	else
+		token = tok_word;
 }
 
 void Lexer::ReadUntil(char u)
