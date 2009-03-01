@@ -98,6 +98,10 @@ AST *Parser::AppendCore()
 		lexer.ReadLine();
 		lexer.NextToken();
 	}
+	else if(word == "drop")
+	{
+		OutputIndexAST *arg1 = istack.Pop();
+	}
 	else
 	{
 		std::string error("unknown token `");
