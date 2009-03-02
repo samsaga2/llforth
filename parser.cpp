@@ -164,8 +164,8 @@ FunctionAST *Parser::ParseFunction()
 	ParseBody(";");
 
 	BodyAST *func_body = new BodyAST();
-	while(istack.stack.size())
-		func_body->push_front(istack.Pop());
+	for(std::list<InferenceStack::Counter *>::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
+		func_body->push_front((*it)->ast);
 
 	BodyAST *func_args = new BodyAST();
 	for(BodyAST::iterator it = istack.args.begin(); it != istack.args.end(); it++)
