@@ -9,7 +9,8 @@ enum TypeAST
 {
 	TYPE_NULL,
 	TYPE_INT32,
-	TYPE_STRING
+	TYPE_STRING,
+	TYPE_ANY
 };
 
 class AST
@@ -62,6 +63,7 @@ class BodyAST : public std::list<AST *>
 {
 public:
 	int OutputSize();
+	TypeAST OutputType(int index);
 	void Print();
 	AST *operator[](size_t index);
 };

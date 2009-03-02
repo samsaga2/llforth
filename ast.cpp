@@ -106,6 +106,23 @@ int BodyAST::OutputSize()
 	return output_size;
 }
 
+TypeAST BodyAST::OutputType(int index)
+{
+	int output_size = 0;
+	size_t idx = 0;
+	for(BodyAST::iterator it = this->begin(); it != this->end(); it++)
+	{
+		AST *ast = (*it);
+		for(size_t i = 0; i < ast->OutputSize(); i++)
+		{
+			if(idx++ == index)
+				return ast->OutputType(i);
+		}
+	}
+
+	assert(false);
+}
+
 void BodyAST::Print()
 {
 	for(BodyAST::iterator it = this->begin(); it != this->end(); it++)
@@ -149,12 +166,7 @@ TypeAST FunctionAST::InputType(int index)
 
 TypeAST FunctionAST::OutputType(int index)
 {
-	if(body->size() == 0)
-		assert(false);
-	else
-		assert(index < body->size());
-
-	return (*body)[index]->OutputType(0);
+	return body->OutputType(index);
 }
 
 int FunctionAST::InputSize()
@@ -174,20 +186,26 @@ void PrintType(TypeAST t)
 		case TYPE_NULL: std::cout << " *"; break;
 		case TYPE_INT32: std::cout << " i"; break;
 		case TYPE_STRING: std::cout << " s"; break;
+		case TYPE_ANY: std::cout << " ?"; break;
 	}
 }
 
 void FunctionAST::Print()
 {
-	std::cout << name << " ";
+	std::cout << name << " (";
 
 	for(int i = 0; i < args->OutputSize(); i++)
-		PrintType((*args)[i]->InputType(0));
+		PrintType((*args)[i]->OutputType(0));
 
-	std::cout << " -- ";
+	std::cout << " --";
 
 	for(int i = 0; i < body->OutputSize(); i++)
-		PrintType((*body)[i]->OutputType(0));
+	{
+		AST* ast = (*body)[i];
+		for(size_t j = 0; j < ast->OutputSize(); j++)
+			PrintType(ast->OutputType(j));
+	}
+	std::cout << " )";
 
 	for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
 	{
@@ -216,9 +234,9 @@ const Type *FunctionAST::ConvertType(TypeAST t)
 
 void FunctionAST::Compile(Module *module)
 {
-	std::vector<const Type *> args(InputSize());
+	std::vector<const Type *> args(OutputSize());
 	for(size_t i = 0; i < args.size(); i++)
-		args[i] = ConvertType(InputType(i));
+		args[i] = ConvertType(OutputType(i));
 
 	const Type *ret_type;
 	switch(OutputSize())
@@ -245,7 +263,7 @@ void FunctionAST::Compile(Module *module)
 
 	// arg names
 	Function::arg_iterator arg_it = function->arg_begin();
-	for(int i = 0; i < InputSize(); i++)
+	for(int i = 0; i < OutputSize(); i++)
 	{
 		std::ostringstream oss;
 		oss << "inp" << i;
@@ -253,16 +271,13 @@ void FunctionAST::Compile(Module *module)
 		arg_it++;
 	}
 
-	assert(OutputSize() == body->size());
-	Value *rets[OutputSize()];
-	int ret_index = 0;
+	std::vector<Value *> rets;
 	for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
 	{
 		AST *ast = *it;
 		for(int i = 0; i < ast->OutputSize(); i++)
-			rets[ret_index++] = ast->GetValue(i, builder);
+			rets.push_back(ast->GetValue(i, builder));
 	}
-	assert(ret_index == OutputSize());
 
 	switch(OutputSize())
 	{
@@ -273,7 +288,7 @@ void FunctionAST::Compile(Module *module)
 			builder.CreateRet(rets[0]);
 			break;
 		default:
-			builder.CreateAggregateRet(rets, OutputSize());
+			builder.CreateAggregateRet(&rets[0], OutputSize());
 			break;
 	}
 }
@@ -356,12 +371,12 @@ TypeAST ArgAST::InputType(int index)
 TypeAST ArgAST::OutputType(int index)
 {
 	assert(index == 0);
-	return TYPE_INT32; // TODO inferir el tipo de argumento segun donde se use en el codigo
+	return TYPE_ANY;
 }
 
 int ArgAST::InputSize()
 {
-	return 0;
+	return 1;
 }
 
 int ArgAST::OutputSize()
@@ -708,7 +723,7 @@ DropAST::DropAST(OutputIndexAST *_arg1) : arg1(_arg1)
 TypeAST DropAST::InputType(int index)
 {
 	assert(index == 0);
-	return arg1->OutputType(0);
+	return TYPE_ANY;
 }
 
 TypeAST DropAST::OutputType(int index)
@@ -729,6 +744,9 @@ int DropAST::OutputSize()
 
 void DropAST::Print()
 {
+	std::cout << "[ ";
+	arg1->Print();
+	std::cout << " ]:*";
 }
 
 void DropAST::Compile(IRBuilder<> builder)
