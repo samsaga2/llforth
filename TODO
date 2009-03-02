@@ -1,15 +1,6 @@
-- comments
-	(* ... *)
-	( ... )
-
 - externs:
 	extern puts ( s -- i )
 	: type ( s -- ) puts drop ;
-
-- polymorphic funcs:
-	: 1drop swap drop swap ;
-	drop '1 '2 --
-		[ '1 '2 ]:1
 
 - if:
 	do inlines and add branch words
@@ -17,8 +8,7 @@
 	: else r> ,label ,jump >r ; inline
 	: endif r> ,label ; inline
 
-- inline:
-	test 1 2 + ;
+- inline
 
 - interactive top loop
 

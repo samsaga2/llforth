@@ -1,3 +1,5 @@
+\ test file
+\ Victor M. <samsaga2@gmail.com>
 : test drop ;
 : test2 1 2 test 4 + ;
 

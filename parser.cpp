@@ -93,10 +93,38 @@ AST *Parser::AppendCore()
 		istack.Push(new StringAST(lexer.word));
 		lexer.NextToken();
 	}
-	else if(word == "--")
+	else if(word == "\\")
 	{
 		lexer.ReadLine();
 		lexer.NextToken();
+	}
+	else if(word == "(")
+	{
+		while(true)
+		{
+			lexer.NextToken();
+			if(lexer.token == Lexer::tok_eof)
+				break;
+			else if(lexer.word == ")")
+			{
+				lexer.NextToken();
+				break;
+			}
+		}
+	}
+	else if(word == "(*")
+	{
+		while(true)
+		{
+			lexer.NextToken();
+			if(lexer.token == Lexer::tok_eof)
+				break;
+			else if(lexer.word == "*)")
+			{
+				lexer.NextToken();
+				break;
+			}
+		}
 	}
 	else if(word == "drop")
 	{
@@ -180,10 +208,38 @@ void Parser::MainLoop()
 	{
 		if(lexer.token == Lexer::tok_eof)
 			break;
-		else if(lexer.word == "--")
+		else if(lexer.word == "\\")
 		{
 			lexer.ReadLine();
 			lexer.NextToken();
+		}
+		else if(lexer.word == "(")
+		{
+			while(true)
+			{
+				lexer.NextToken();
+				if(lexer.token == Lexer::tok_eof)
+					break;
+				else if(lexer.word == ")")
+				{
+					lexer.NextToken();
+					break;
+				}
+			}
+		}
+		else if(lexer.word == "(*")
+		{
+			while(true)
+			{
+				lexer.NextToken();
+				if(lexer.token == Lexer::tok_eof)
+					break;
+				else if(lexer.word == "*)")
+				{
+					lexer.NextToken();
+					break;
+				}
+			}
 		}
 		else
 		{
