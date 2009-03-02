@@ -15,12 +15,9 @@ public:
 	Parser(Lexer &_lexer);
 	FunctionAST *FindFunction(const std::string &word);
 	void MainLoop();
-	void Compile();
+	void Compile(Module *module);
 private:
-	void AppendFunction();
-	AST *AppendCore();
-	void AppendInteger();
-	void ParseWordExpr();
+	AST *AppendCore(const std::string &word);
 	void ParseBody(const std::string &end);
 	FunctionAST *ParseFunction();
 };

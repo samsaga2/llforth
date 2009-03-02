@@ -3,6 +3,9 @@
 #include "lexer.h"
 #include "ast.h"
 #include "parser.h"
+#include <llvm/Module.h>
+
+using namespace llvm;
 
 int main(int argc, char **argv)
 {
@@ -14,7 +17,10 @@ int main(int argc, char **argv)
 
 		Parser parser(lexer);
 		parser.MainLoop();
-		parser.Compile();
+
+		Module module("llforth");
+		parser.Compile(&module);
+		module.dump();
 	}
 	catch(std::string &error)
 	{

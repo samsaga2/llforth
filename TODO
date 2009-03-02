@@ -10,7 +10,5 @@
 
 - inline
 
-- interactive top loop
-
-- comment code duplicated
+- implement JIT into main loop
 

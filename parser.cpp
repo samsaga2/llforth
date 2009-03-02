@@ -32,24 +32,8 @@ FunctionAST *Parser::FindFunction(const std::string &word)
 	return NULL;
 }
 
-void Parser::AppendFunction()
+AST *Parser::AppendCore(const std::string &word)
 {
-	std::string func_name = lexer.word;
-	lexer.NextToken();
-
-	FunctionAST *function = FindFunction(func_name);
-	assert(function != NULL);
-
-	BodyAST *args = istack.Pop(function->InputSize());
-	CallAST *call = new CallAST(function, args);
-	istack.Push(call);
-}
-
-AST *Parser::AppendCore()
-{
-	std::string word = lexer.word;
-	lexer.NextToken();
-
 	if(word == "dup")
 	{
 		OutputIndexAST *arg1 = istack.Pop();
@@ -106,34 +90,6 @@ AST *Parser::AppendCore()
 	}
 }
 
-void Parser::AppendInteger()
-{
-	int integer = lexer.integer;
-	lexer.NextToken();
-
-	AST *ast = new IntegerAST(integer);
-	istack.Push(ast);
-}
-
-void Parser::ParseWordExpr()
-{
-	FunctionAST *function = FindFunction(lexer.word);
-	if(function != NULL)
-		AppendFunction();
-	else
-		switch(lexer.token)
-		{
-		default:
-			throw std::string("end of file");
-		case Lexer::tok_word:
-			AppendCore();
-			break;
-		case Lexer::tok_integer:
-			AppendInteger();
-			break;
-		}
-}
-
 void Parser::ParseBody(const std::string &end)
 {
 	istack.Clear();
@@ -142,25 +98,55 @@ void Parser::ParseBody(const std::string &end)
 		if(lexer.word == end)
 			break;
 
-		ParseWordExpr();
+		std::string word = lexer.word;
+		int token = lexer.token;
+		int integer = lexer.integer;
+		lexer.NextToken();
+
+		FunctionAST *function = FindFunction(word);
+		if(function != NULL)
+		{
+			// append function call
+			BodyAST *args = istack.Pop(function->InputSize());
+			istack.Push(new CallAST(function, args));
+		}
+		else
+			switch(token)
+			{
+			case Lexer::tok_word:
+				// append core word
+				AppendCore(word);
+				break;
+			case Lexer::tok_integer:
+				// append literal integer
+				istack.Push(new IntegerAST(integer));
+				break;
+			case Lexer::tok_eof:
+				throw std::string("end of file");
+			}
 	}
 	while(true);
 }
 
 FunctionAST *Parser::ParseFunction()
 {
+	// parse :
 	assert(lexer.word == ":");
 	lexer.NextToken();
 
+	// parse function name
 	std::string func_name = lexer.word;
 	lexer.NextToken();
 
+	// parse function body
 	ParseBody(";");
 
+	// extract function body
 	BodyAST *func_body = new BodyAST();
 	for(std::list<InferenceStack::Counter *>::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
 		func_body->push_front((*it)->ast);
 
+	// extract function args
 	BodyAST *func_args = new BodyAST();
 	for(BodyAST::iterator it = istack.args.begin(); it != istack.args.end(); it++)
 		func_args->push_back(*it);
@@ -171,33 +157,29 @@ FunctionAST *Parser::ParseFunction()
 void Parser::MainLoop()
 {
 	while(true)
+	{
 		if(lexer.token == Lexer::tok_eof)
 			break;
-		else if(lexer.word == "\\")
-		{
-			lexer.ReadLine();
-			lexer.NextToken();
-		}
 		else if(lexer.word == ":")
 		{
-			FunctionAST *function = ParseFunction();
-			functions.push_back(function);
-			function->Print();
-			lexer.NextToken();
+			functions.push_back(ParseFunction());
+			functions.back()->Print();
 		}
 		else
-			throw std::string("unknown word");
+			// TODO jit
+			throw std::string("not implemented");
+
+		lexer.NextToken();
+	}
 }
 
-void Parser::Compile()
+void Parser::Compile(Module *module)
 {
-	Module module("llforth");
-
 	for(Functions::iterator it = functions.begin(); it != functions.end(); it++)
-		(*it)->Compile(&module);
+		(*it)->Compile(module);
 
 	PassManager pm;
-	pm.add(new TargetData(&module));
+	pm.add(new TargetData(module));
 	pm.add(createIPSCCPPass());
 	pm.add(createGlobalOptimizerPass());
 	pm.add(createInstructionCombiningPass());
@@ -207,8 +189,6 @@ void Parser::Compile()
 	pm.add(createGVNPass());
 	pm.add(createPromoteMemoryToRegisterPass());
 	pm.add(createCFGSimplificationPass());
-	pm.run(module);
-
-	module.dump();
+	pm.run(*module);
 }
 
