@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include <sstream>
+#include <assert.h>
 
 Lexer::Lexer(std::istream &_in) : in(_in)
 {
@@ -13,11 +14,23 @@ void Lexer::NextToken()
 		return;
 	}
 
-	std::istringstream iss(word);
-	if(iss >> integer)
-		token = tok_integer;
+	if(word == "\\")
+	{
+		ReadLine();
+		NextToken();
+	}
+	else if(word == "(")
+		Skip("(", ")");
+	else if(word == "(*")
+		Skip("(*", "*)");
 	else
-		token = tok_word;
+	{
+		std::istringstream iss(word);
+		if(iss >> integer)
+			token = tok_integer;
+		else
+			token = tok_word;
+	}
 }
 
 void Lexer::ReadUntil(char u)
@@ -47,5 +60,21 @@ void Lexer::ReadLine()
 		token = tok_eof;
 	else
 		token = tok_word;
+}
+
+void Lexer::Skip(const std::string &open, const std::string &close)
+{
+	assert(word == open);
+	while(true)
+	{
+		NextToken();
+		if(token == tok_eof)
+			break;
+		else if(word == close)
+		{
+			NextToken();
+			break;
+		}
+	}
 }
 

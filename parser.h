@@ -13,15 +13,15 @@ public:
 	InferenceStack istack;
 
 	Parser(Lexer &_lexer);
-
 	FunctionAST *FindFunction(const std::string &word);
+	void MainLoop();
+	void Compile();
+private:
 	void AppendFunction();
 	AST *AppendCore();
 	void AppendInteger();
 	void ParseWordExpr();
 	void ParseBody(const std::string &end);
 	FunctionAST *ParseFunction();
-	void MainLoop();
-	void Compile();
 };
 

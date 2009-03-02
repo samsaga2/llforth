@@ -22,5 +22,7 @@ public:
 	void NextToken();
 	void ReadUntil(char u);
 	void ReadLine();
+private:
+	void Skip(const std::string &open, const std::string &close);
 };
 

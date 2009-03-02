@@ -11,10 +11,9 @@
 #include <llvm/CodeGen/Passes.h>
 #include <llvm/LinkAllPasses.h>
 #include <llvm/Target/TargetData.h>
+#include "parser.h"
 
 using namespace llvm;
-
-#include "parser.h"
 
 Parser::Parser(Lexer &_lexer) : lexer(_lexer)
 {
@@ -92,39 +91,6 @@ AST *Parser::AppendCore()
 		lexer.ReadUntil(34);
 		istack.Push(new StringAST(lexer.word));
 		lexer.NextToken();
-	}
-	else if(word == "\\")
-	{
-		lexer.ReadLine();
-		lexer.NextToken();
-	}
-	else if(word == "(")
-	{
-		while(true)
-		{
-			lexer.NextToken();
-			if(lexer.token == Lexer::tok_eof)
-				break;
-			else if(lexer.word == ")")
-			{
-				lexer.NextToken();
-				break;
-			}
-		}
-	}
-	else if(word == "(*")
-	{
-		while(true)
-		{
-			lexer.NextToken();
-			if(lexer.token == Lexer::tok_eof)
-				break;
-			else if(lexer.word == "*)")
-			{
-				lexer.NextToken();
-				break;
-			}
-		}
 	}
 	else if(word == "drop")
 	{
@@ -205,7 +171,6 @@ FunctionAST *Parser::ParseFunction()
 void Parser::MainLoop()
 {
 	while(true)
-	{
 		if(lexer.token == Lexer::tok_eof)
 			break;
 		else if(lexer.word == "\\")
@@ -213,42 +178,15 @@ void Parser::MainLoop()
 			lexer.ReadLine();
 			lexer.NextToken();
 		}
-		else if(lexer.word == "(")
-		{
-			while(true)
-			{
-				lexer.NextToken();
-				if(lexer.token == Lexer::tok_eof)
-					break;
-				else if(lexer.word == ")")
-				{
-					lexer.NextToken();
-					break;
-				}
-			}
-		}
-		else if(lexer.word == "(*")
-		{
-			while(true)
-			{
-				lexer.NextToken();
-				if(lexer.token == Lexer::tok_eof)
-					break;
-				else if(lexer.word == "*)")
-				{
-					lexer.NextToken();
-					break;
-				}
-			}
-		}
-		else
+		else if(lexer.word == ":")
 		{
 			FunctionAST *function = ParseFunction();
 			functions.push_back(function);
 			function->Print();
 			lexer.NextToken();
 		}
-	}
+		else
+			throw std::string("unknown word");
 }
 
 void Parser::Compile()

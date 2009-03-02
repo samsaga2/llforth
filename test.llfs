@@ -1,5 +1,6 @@
 \ test file
 \ Victor M. <samsaga2@gmail.com>
+(* (* nested ( whoaaa ) comments *) *)
 : test drop ;
 : test2 1 2 test 4 + ;
 
