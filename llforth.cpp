@@ -1,28 +1,32 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <llvm/Module.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <unistd.h>
+#include <llvm/PassManager.h>
+#include <llvm/CodeGen/Passes.h>
+#include <llvm/LinkAllPasses.h>
+#include <llvm/Target/TargetData.h>
 #include "lexer.h"
 #include "ast.h"
 #include "parser.h"
 
 using namespace llvm;
-using namespace std;
 
 static bool verbose = false;
-static std::string input_filename("test.llfs");
+static std::string input_filename("");
 static std::string output_filename("a.obj");
 static bool optimize = false;
 
 void show_help()
 {
-	cout << "llforth [OPTIONS]..." << endl << endl;
-	cout << "  -h         	show help" << endl;
-	cout << "  -v         	verbose output" << endl;
-	cout << "  -o filename	object filename" << endl;
-	cout << "  -O         	run optimize passes" << endl;
-	cout << "  -i         	input filename" << endl;
+	std::cout << "llforth [OPTIONS]..." << std::endl << std::endl;
+	std::cout << "  -h         	show help" << std::endl;
+	std::cout << "  -v         	verbose output" << std::endl;
+	std::cout << "  -o filename	object filename" << std::endl;
+	std::cout << "  -O         	run optimize passes" << std::endl;
+	std::cout << "  -i         	input filename" << std::endl;
 	exit(0);
 }
 
@@ -51,16 +55,31 @@ void read_args(int argc, char **argv)
 			input_filename = optarg;
 			break;
 		case '?':
-			cerr << "Unknown option -" << (char)optopt << endl;
+			cerr << "Unknown option -" << (char)optopt << std::endl;
 		}
 }
 
-void compile()
+void do_optimize(Module *module)
+{
+	PassManager pm;
+	pm.add(new TargetData(module));
+	pm.add(createIPSCCPPass());
+	pm.add(createGlobalOptimizerPass());
+	pm.add(createInstructionCombiningPass());
+	pm.add(createFunctionInliningPass());
+	pm.add(createGlobalOptimizerPass());
+	pm.add(createInstructionCombiningPass());
+	pm.add(createGVNPass());
+	pm.add(createPromoteMemoryToRegisterPass());
+	pm.add(createCFGSimplificationPass());
+	pm.run(*module);
+}
+
+void compile(std::istream &in)
 {
 	Module module("llforth");
-
-	std::ifstream in(input_filename.c_str());
 	Parser parser(in);
+
 	try
 	{
 		parser.MainLoop();
@@ -71,7 +90,7 @@ void compile()
 	parser.Compile(&module);
 
 	if(optimize)
-		parser.Optimize(&module);
+		do_optimize(&module);
 
 	if(verbose)
 		module.dump();
@@ -87,7 +106,13 @@ int main(int argc, char **argv)
 	read_args(argc, argv);
 	try
 	{
-		compile();
+		if(input_filename.size() != 0)
+		{
+			std::ifstream is(input_filename.c_str());
+			compile(is);
+		}
+		else
+			compile(std::cin);
 		return 0;
 	}
 	catch(std::string &error)

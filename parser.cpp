@@ -3,21 +3,16 @@
 #include <sstream>
 #include <assert.h>
 #include <llvm/Module.h>
-#include <llvm/PassManager.h>
 #include <llvm/Assembly/PrintModulePass.h>
 #include <llvm/Function.h>
 #include <llvm/CallingConv.h>
 #include <llvm/Support/IRBuilder.h>
-#include <llvm/CodeGen/Passes.h>
-#include <llvm/LinkAllPasses.h>
-#include <llvm/Target/TargetData.h>
 #include "parser.h"
 
 using namespace llvm;
 
 Parser::Parser(std::istream &in) : lexer(in)
 {
-	lexer.NextToken();
 }
 
 FunctionBaseAST *Parser::FindFunction(const std::string &word)
@@ -257,6 +252,7 @@ ExternAST *Parser::ParseExtern()
 
 void Parser::MainLoop()
 {
+	lexer.NextToken();
 	while(true)
 	{
 		if(lexer.word == ":")
@@ -279,22 +275,6 @@ void Parser::Compile(Module *module)
 {
 	for(Functions::iterator it = functions.begin(); it != functions.end(); it++)
 		(*it)->Compile(module);
-}
-
-void Parser::Optimize(Module *module)
-{
-	PassManager pm;
-	pm.add(new TargetData(module));
-	pm.add(createIPSCCPPass());
-	pm.add(createGlobalOptimizerPass());
-	pm.add(createInstructionCombiningPass());
-	pm.add(createFunctionInliningPass());
-	pm.add(createGlobalOptimizerPass());
-	pm.add(createInstructionCombiningPass());
-	pm.add(createGVNPass());
-	pm.add(createPromoteMemoryToRegisterPass());
-	pm.add(createCFGSimplificationPass());
-	pm.run(*module);
 }
 
 void Parser::Print()
