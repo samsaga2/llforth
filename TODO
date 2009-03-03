@@ -1,10 +1,8 @@
-- if:
-	do inlines and add branch words
-	: if ,branch >r ; inline
-	: else r> ,label ,jump >r ; inline
-	: endif r> ,label ; inline
+- floats, doubles, binary numbers, hex numbers
+
+- implement JIT into main loop
 
 - inline
 
-- implement JIT into main loop
+- add words: if then end do loop while repeat variable @ ! ...
 
