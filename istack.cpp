@@ -18,7 +18,7 @@ OutputIndexAST *InferenceStack::Pop(TypeAST type)
 
 	OutputIndexAST *value = stack.back();
 	stack.pop_back();
-	assert(value->OutputType(0) == type || type == TYPE_ANY);
+	assert(value->OutputType() == type || type == TYPE_ANY);
 
 	return value;
 }

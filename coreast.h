@@ -36,9 +36,9 @@ protected:
 class CallAST : public AST
 {
 	FunctionBaseAST *function;
-	BodyAST *args;
+	OutputList *args;
 public:
-	CallAST(FunctionBaseAST *_function, BodyAST *_args);
+	CallAST(FunctionBaseAST *_function, OutputList *_args);
 	TypeAST InputType(int index);
 	TypeAST OutputType(int index);
 	int InputSize();

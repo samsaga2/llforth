@@ -78,7 +78,7 @@ void StringAST::DoCompile(IRBuilder<> builder)
 }
 
 /// CallAST
-CallAST::CallAST(FunctionBaseAST *_function, BodyAST *_args)
+CallAST::CallAST(FunctionBaseAST *_function, OutputList *_args)
 	: function(_function), args(_args)
 {
 }
@@ -112,9 +112,9 @@ void CallAST::DoCompile(IRBuilder<> builder)
 {
 	Function *compiled_function = function->CompiledFunction();
 	vector<Value *> func_args;
-	for(BodyAST::iterator it = args->begin(); it != args->end(); it++)
+	for(OutputList::iterator it = args->begin(); it != args->end(); it++)
 	{
-		Value *value = (*it)->GetValue(0, builder);
+		Value *value = (*it)->GetValue(builder);
 		func_args.push_back(value);
 	}
 
@@ -142,13 +142,13 @@ DupAST::DupAST(OutputIndexAST *_arg1) : arg1(_arg1)
 TypeAST DupAST::InputType(int index)
 {
 	assert(index == 0);
-	return arg1->OutputType(0);
+	return arg1->OutputType();
 }
 
 TypeAST DupAST::OutputType(int index)
 {
 	assert(index == 0 || index == 1);
-	return arg1->OutputType(0);
+	return arg1->OutputType();
 }
 
 int DupAST::InputSize()
@@ -168,7 +168,7 @@ void DupAST::Print()
 
 void DupAST::DoCompile(IRBuilder<> builder)
 {
-	Value *v = arg1->GetValue(0, builder);
+	Value *v = arg1->GetValue(builder);
 	SetValue(0, v);
 	SetValue(1, v);
 }
@@ -207,7 +207,7 @@ void MultAST::Print()
 
 void MultAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, builder.CreateMul(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
+	SetValue(0, builder.CreateMul(arg1->GetValue(builder), arg2->GetValue(builder)));
 }
 
 /// AddAST
@@ -244,8 +244,8 @@ void AddAST::Print()
 
 void AddAST::DoCompile(IRBuilder<> builder)
 {
-	Value *v1 = arg1->GetValue(0, builder);
-	Value *v2 = arg2->GetValue(0, builder);
+	Value *v1 = arg1->GetValue(builder);
+	Value *v2 = arg2->GetValue(builder);
 	SetValue(0, builder.CreateAdd(v1, v2));
 }
 
@@ -258,9 +258,9 @@ TypeAST SwapAST::InputType(int index)
 {
 	assert(index == 0 || index == 1);
 	if(index == 0)
-		return arg1->OutputType(0);
+		return arg1->OutputType();
 	else
-		return arg2->OutputType(0);
+		return arg2->OutputType();
 }
 
 TypeAST SwapAST::OutputType(int index)
@@ -268,9 +268,9 @@ TypeAST SwapAST::OutputType(int index)
 	assert(index == 0 || index == 1);
 
 	if(index == 0)
-		return arg1->OutputType(0);
+		return arg1->OutputType();
 	else
-		return arg2->OutputType(0);
+		return arg2->OutputType();
 }
 
 int SwapAST::InputSize()
@@ -292,8 +292,8 @@ void SwapAST::Print()
 
 void SwapAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, arg1->GetValue(0, builder));
-	SetValue(1, arg2->GetValue(0, builder));
+	SetValue(0, arg1->GetValue(builder));
+	SetValue(1, arg2->GetValue(builder));
 }
 
 // OverAST
@@ -305,18 +305,18 @@ TypeAST OverAST::InputType(int index)
 {
 	assert(index == 0 || index == 1);
 	if(index == 0)
-		return arg1->OutputType(0);
+		return arg1->OutputType();
 	else
-		return arg2->OutputType(0);
+		return arg2->OutputType();
 }
 
 TypeAST OverAST::OutputType(int index)
 {
 	assert(index >= 0 && index <= 2);
 	if(index == 0 || index == 2)
-		return arg1->OutputType(0);
+		return arg1->OutputType();
 	else
-		return arg2->OutputType(0);
+		return arg2->OutputType();
 }
 
 int OverAST::InputSize()
@@ -340,9 +340,9 @@ void OverAST::Print()
 
 void OverAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, arg1->GetValue(0, builder));
-	SetValue(1, arg2->GetValue(0, builder));
-	SetValue(2, arg1->GetValue(0, builder));
+	SetValue(0, arg1->GetValue(builder));
+	SetValue(1, arg2->GetValue(builder));
+	SetValue(2, arg1->GetValue(builder));
 }
 
 /// RotAST
@@ -355,22 +355,22 @@ TypeAST RotAST::InputType(int index)
 {
 	assert(index >= 0 && index <= 2);
 	if(index == 0)
-		return arg1->OutputType(0);
+		return arg1->OutputType();
 	else if(index == 1)
-		return arg2->OutputType(0);
+		return arg2->OutputType();
 	else
-		return arg3->OutputType(0);
+		return arg3->OutputType();
 }
 
 TypeAST RotAST::OutputType(int index)
 {
 	assert(index >= 0 && index <= 2);
 	if(index == 0)
-		return arg2->OutputType(0);
+		return arg2->OutputType();
 	else if(index == 1)
-		return arg3->OutputType(0);
+		return arg3->OutputType();
 	else
-		return arg1->OutputType(0);
+		return arg1->OutputType();
 }
 
 int RotAST::InputSize()
@@ -394,11 +394,9 @@ void RotAST::Print()
 
 void RotAST::DoCompile(IRBuilder<> builder)
 {
-	arg1->Compile(builder);
-	arg2->Compile(builder);
-	SetValue(0, arg1->GetValue(0, builder));
-	SetValue(2, arg2->GetValue(0, builder));
-	SetValue(1, arg3->GetValue(0, builder));
+	SetValue(0, arg1->GetValue(builder));
+	SetValue(2, arg2->GetValue(builder));
+	SetValue(1, arg3->GetValue(builder));
 }
 //
 /// DropAST

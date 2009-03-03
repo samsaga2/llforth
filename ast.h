@@ -56,19 +56,18 @@ protected:
 	void DoCompile(IRBuilder<> builder);
 };
 
-class OutputIndexAST : public AST
+class OutputIndexAST
 {
 	AST *ast;
 	int index;
+	Value *value;
+	bool compiled;
 public:
 	OutputIndexAST(AST *_ast, int _index);
-	TypeAST InputType(int index);
-	TypeAST OutputType(int index);
-	int InputSize();
-	int OutputSize();
+	TypeAST OutputType();
 	void Print();
-protected:
-	void DoCompile(IRBuilder<> builder);
+	Value *GetValue(IRBuilder<> builder);
+	void Compile(IRBuilder<> builder);
 };
 
 typedef std::list<OutputIndexAST *> OutputList;

@@ -120,30 +120,13 @@ void ArgAST::DoCompile(IRBuilder<> builder)
 
 /// OutputIndexAST
 OutputIndexAST::OutputIndexAST(AST *_ast, int _index)
-	: ast(_ast), index(_index)
+	: ast(_ast), index(_index), compiled(false)
 {
 }
 
-TypeAST OutputIndexAST::InputType(int index)
+TypeAST OutputIndexAST::OutputType()
 {
-	assert(false);
-	return TYPE_NULL;
-}
-
-TypeAST OutputIndexAST::OutputType(int index)
-{
-	assert(index == 0);
 	return ast->OutputType(this->index);
-}
-
-int OutputIndexAST::InputSize()
-{
-	return 0;
-}
-
-int OutputIndexAST::OutputSize()
-{
-	return 1;
 }
 
 void OutputIndexAST::Print()
@@ -158,8 +141,18 @@ void OutputIndexAST::Print()
 	}
 }
 
-void OutputIndexAST::DoCompile(IRBuilder<> builder)
+void OutputIndexAST::Compile(IRBuilder<> builder)
 {
-	SetValue(0, ast->GetValue(index, builder));
+	if(compiled)
+		return;
+
+	value = ast->GetValue(index, builder);
+	compiled = true;
+}
+
+Value *OutputIndexAST::GetValue(IRBuilder<> builder)
+{
+	Compile(builder);
+	return value;
 }
 

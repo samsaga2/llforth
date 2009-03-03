@@ -123,7 +123,7 @@ void Parser::ParseBody(const std::string &end)
 		if(function != NULL)
 		{
 			// append function call
-			BodyAST *args = new BodyAST();
+			OutputList *args = new OutputList();
 			for(size_t i = 0; i < function->InputSize(); i++)
 				args->push_back(istack.Pop(function->InputType(i)));
 

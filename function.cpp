@@ -51,7 +51,7 @@ TypeAST FunctionAST::OutputType(int index)
 		index--;
 		it++;
 	}
-	return (*it)->OutputType(0);
+	return (*it)->OutputType();
 }
 
 int FunctionAST::InputSize()
@@ -146,7 +146,7 @@ void FunctionAST::Compile(Module *module)
 	// create outputs
 	vector<Value *> rets;
 	for(OutputList::iterator it = outputs->begin(); it != outputs->end(); it++)
-		rets.push_back((*it)->GetValue(0, builder));
+		rets.push_back((*it)->GetValue(builder));
 
 	// create outputs
 	switch(OutputSize())
