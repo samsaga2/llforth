@@ -175,7 +175,7 @@ FunctionAST *Parser::ParseFunction()
 	// extract outputs
 	BodyAST *func_outs = new BodyAST();
 	for(std::list<InferenceStack::Counter *>::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
-		func_outs->push_front((*it)->ast);
+		func_outs->push_back((*it)->ast);
 
 	return new FunctionAST(func_name, func_body, func_args, func_outs);
 }
