@@ -19,12 +19,12 @@ Parser::Parser(Lexer &_lexer) : lexer(_lexer)
 {
 }
 
-FunctionAST *Parser::FindFunction(const std::string &word)
+FunctionBaseAST *Parser::FindFunction(const std::string &word)
 {
 	Functions::reverse_iterator it = functions.rbegin();
 	while(it != functions.rend())
 	{
-		FunctionAST *function = *it;
+		FunctionBaseAST *function = *it;
 		if(function->Name() == word)
 			return function;
 		it++;
@@ -103,7 +103,7 @@ void Parser::ParseBody(const std::string &end)
 		int integer = lexer.integer;
 		lexer.NextToken();
 
-		FunctionAST *function = FindFunction(word);
+		FunctionBaseAST *function = FindFunction(word);
 		if(function != NULL)
 		{
 			// append function call
@@ -154,6 +154,58 @@ FunctionAST *Parser::ParseFunction()
 	return new FunctionAST(func_name, func_body, func_args);
 }
 
+TypeAST Parser::ConvertType(const std::string &type)
+{
+	if(type == "i")
+		return TYPE_INT32;
+	else if(type == "s")
+		return TYPE_STRING;
+	else
+		throw std::string("not supported");
+}
+
+ExternAST *Parser::ParseExtern()
+{
+	// parse extern
+	assert(lexer.word == "extern");
+	lexer.NextToken();
+
+	// parse function name
+	std::string func_name = lexer.word;
+	lexer.NextWord();
+
+	// parse (
+	assert(lexer.word == "(");
+	lexer.NextToken();
+
+	// read inputs
+	std::vector<TypeAST> inputs;
+	while(lexer.word != "--" && lexer.token != Lexer::tok_eof)
+	{
+		TypeAST token = ConvertType(lexer.word);
+		inputs.push_back(token);
+		lexer.NextToken();
+	}
+
+	// parse --
+	assert(lexer.word == "--");
+	lexer.NextToken();
+
+	// read outputs
+	std::vector<TypeAST> outputs;
+	while(lexer.word != ")" && lexer.token != Lexer::tok_eof)
+	{
+		TypeAST token = ConvertType(lexer.word);
+		outputs.push_back(token);
+		lexer.NextToken();
+	}
+
+	// parse )
+	assert(lexer.word == ")");
+
+	return new ExternAST(func_name, inputs, outputs);
+}
+
 void Parser::MainLoop()
 {
 	while(true)
@@ -163,6 +215,11 @@ void Parser::MainLoop()
 		else if(lexer.word == ":")
 		{
 			functions.push_back(ParseFunction());
+			functions.back()->Print();
+		}
+		else if(lexer.word == "extern")
+		{
+			functions.push_back(ParseExtern());
 			functions.back()->Print();
 		}
 		else

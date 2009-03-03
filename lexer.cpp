@@ -6,13 +6,22 @@ Lexer::Lexer(std::istream &_in) : in(_in)
 {
 }
 
-void Lexer::NextToken()
+void Lexer::NextWord()
 {
 	if(!(in >> word))
 	{
 		token = tok_eof;
 		return;
 	}
+
+	token = tok_word;
+}
+
+void Lexer::NextToken()
+{
+	NextWord();
+	if(token == tok_eof)
+		return;
 
 	if(word == "\\")
 	{
@@ -28,8 +37,6 @@ void Lexer::NextToken()
 		std::istringstream iss(word);
 		if(iss >> integer)
 			token = tok_integer;
-		else
-			token = tok_word;
 	}
 }
 

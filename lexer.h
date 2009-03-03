@@ -19,6 +19,7 @@ public:
 
 	Lexer(std::istream &_in);
 
+	void NextWord();
 	void NextToken();
 	void ReadUntil(char u);
 	void ReadLine();

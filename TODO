@@ -1,6 +1,6 @@
-- externs:
+- Drop bug
 	extern puts ( s -- i )
-	: type ( s -- ) puts drop ;
+	: test puts " hello" drop ;
 
 - if:
 	do inlines and add branch words

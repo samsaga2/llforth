@@ -68,7 +68,22 @@ public:
 	AST *operator[](size_t index);
 };
 
-class FunctionAST
+class FunctionBaseAST
+{
+protected:
+	const Type *ConvertType(TypeAST t);
+public:
+	virtual const std::string Name() = 0;
+	virtual TypeAST InputType(int index) = 0;
+	virtual TypeAST OutputType(int index) = 0;
+	virtual int InputSize() = 0;
+	virtual int OutputSize() = 0;
+	virtual void Print() = 0;
+	virtual void Compile(Module *module) = 0;
+	virtual Function *CompiledFunction() = 0;
+};
+
+class FunctionAST : public FunctionBaseAST
 {
 	std::string name;
 	BodyAST *body;
@@ -84,16 +99,32 @@ public:
 	void Print();
 	void Compile(Module *module);
 	Function *CompiledFunction();
-private:
-	const Type *ConvertType(TypeAST t);
+};
+
+class ExternAST : public FunctionBaseAST
+{
+	std::string name;
+	std::vector<TypeAST> inputs;
+	std::vector<TypeAST> outputs;
+	Function *function;
+public:
+	ExternAST(const std::string &_name, std::vector<TypeAST> _inputs, std::vector<TypeAST> _outputs);
+	const std::string Name();
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
+	int InputSize();
+	int OutputSize();
+	void Print();
+	void Compile(Module *module);
+	Function *CompiledFunction();
 };
 
 class CallAST : public AST
 {
-	FunctionAST *function;
+	FunctionBaseAST *function;
 	BodyAST *args;
 public:
-	CallAST(FunctionAST *_function, BodyAST *_args);
+	CallAST(FunctionBaseAST *_function, BodyAST *_args);
 	TypeAST InputType(int index);
 	TypeAST OutputType(int index);
 	int InputSize();

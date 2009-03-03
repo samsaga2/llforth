@@ -14,6 +14,10 @@ all: llforth
 llforth: $(OBJECTS)
 	$(CC) $(OBJECTS) -o llforth $(LDFLAGS) $(CFLAGS)
 
+test: a.obj
+	./llforth
+	llvm-ld a.obj --native 
+
 clean:
-	rm -f *.o llforth
+	rm -f *.o llforth *.obj a.out a.out.bc
 

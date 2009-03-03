@@ -1,6 +1,5 @@
 \ test file
 \ Victor M. <samsaga2@gmail.com>
-(* (* nested ( whoaaa ) comments *) *)
-: test drop ;
-: test2 1 2 test 4 + ;
+extern puts ( s -- i )
+: main " hello world!" puts ;
 

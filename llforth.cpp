@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "parser.h"
 #include <llvm/Module.h>
+#include <llvm/Bitcode/ReaderWriter.h>
 
 using namespace llvm;
 
@@ -21,6 +22,10 @@ int main(int argc, char **argv)
 		Module module("llforth");
 		parser.Compile(&module);
 		module.dump();
+
+		std::ofstream of("a.obj", std::ios::binary);
+		WriteBitcodeToFile(&module, of);
+		of.close();
 	}
 	catch(std::string &error)
 	{

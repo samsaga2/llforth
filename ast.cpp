@@ -190,6 +190,24 @@ void PrintType(TypeAST t)
 	}
 }
 
+/// FunctionBaseAST
+const Type *FunctionBaseAST::ConvertType(TypeAST t)
+{
+	switch(t)
+	{
+		case TYPE_NULL:
+			throw std::string("not supported");
+
+		case TYPE_INT32:
+			return Type::Int32Ty;
+
+		case TYPE_STRING:
+			return PointerType::getUnqual(Type::Int8Ty);
+			//return ArrayType::get(Type::Int8Ty, 5);
+	}
+}
+
+// FunctionAST
 void FunctionAST::Print()
 {
 	std::cout << name << " (";
@@ -216,28 +234,14 @@ void FunctionAST::Print()
 	std::cout << std::endl << std::endl;
 }
 
-const Type *FunctionAST::ConvertType(TypeAST t)
-{
-	switch(t)
-	{
-		case TYPE_NULL:
-			throw std::string("not supported");
-
-		case TYPE_INT32:
-			return Type::Int32Ty;
-
-		case TYPE_STRING:
-			return PointerType::getUnqual(Type::Int8Ty);
-			//return ArrayType::get(Type::Int8Ty, 5);
-	}
-}
-
 void FunctionAST::Compile(Module *module)
 {
+	// function arguments types
 	std::vector<const Type *> args(OutputSize());
 	for(size_t i = 0; i < args.size(); i++)
 		args[i] = ConvertType(OutputType(i));
 
+	// function output types
 	const Type *ret_type;
 	switch(OutputSize())
 	{
@@ -255,11 +259,9 @@ void FunctionAST::Compile(Module *module)
 			break;
 	}
 
+	// create function
 	FunctionType *function_type = FunctionType::get(ret_type, args, false);
 	function = Function::Create(function_type, Function::ExternalLinkage, name, module);
-
-	BasicBlock *entry = BasicBlock::Create("entry", function);
-	IRBuilder<> builder(entry);
 
 	// arg names
 	Function::arg_iterator arg_it = function->arg_begin();
@@ -271,6 +273,11 @@ void FunctionAST::Compile(Module *module)
 		arg_it++;
 	}
 
+	// function main entry
+	BasicBlock *entry = BasicBlock::Create("entry", function);
+	IRBuilder<> builder(entry);
+
+	// create body
 	std::vector<Value *> rets;
 	for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
 	{
@@ -279,6 +286,7 @@ void FunctionAST::Compile(Module *module)
 			rets.push_back(ast->GetValue(i, builder));
 	}
 
+	// create outputs
 	switch(OutputSize())
 	{
 		case 0:
@@ -298,8 +306,103 @@ Function *FunctionAST::CompiledFunction()
 	return function;
 }
 
+// ExternAST
+ExternAST::ExternAST(const std::string &_name, std::vector<TypeAST> _inputs, std::vector<TypeAST> _outputs)
+	: name(_name), inputs(_inputs), outputs(_outputs)
+{
+}
+
+const std::string ExternAST::Name()
+{
+	return name;
+}
+
+TypeAST ExternAST::InputType(int index)
+{
+	assert(index >= 0 && index < inputs.size());
+	return inputs[index];
+}
+
+TypeAST ExternAST::OutputType(int index)
+{
+	assert(index >= 0 && index < outputs.size());
+	return outputs[index];
+}
+
+int ExternAST::InputSize()
+{
+	return inputs.size();
+}
+
+int ExternAST::OutputSize()
+{
+	return outputs.size();
+}
+
+void ExternAST::Print()
+{
+	std::cout << "extern " << name << " (";
+
+	for(int i = 0; i < inputs.size(); i++)
+		PrintType(inputs[i]);
+
+	std::cout << " --";
+
+	for(int i = 0; i < outputs.size(); i++)
+		PrintType(outputs[i]);
+
+	std::cout << " )";
+
+	std::cout << std::endl << std::endl;
+}
+
+void ExternAST::Compile(Module *module)
+{
+	// function arguments types
+	std::vector<const Type *> args(inputs.size());
+	for(size_t i = 0; i < inputs.size(); i++)
+		args[i] = ConvertType(inputs[i]);
+
+	// function output types
+	const Type *ret_type;
+	switch(outputs.size())
+	{
+		case 0:
+			ret_type = Type::VoidTy;
+			break;
+		case 1:
+			ret_type = ConvertType(outputs[0]);
+			break;
+		default:
+			std::vector<const Type *> ret_args(outputs.size());
+			for(size_t i = 0; i < ret_args.size(); i++)
+				ret_args[i] = ConvertType(outputs[i]);
+			ret_type = StructType::get(ret_args);
+			break;
+	}
+
+	// create function
+	FunctionType *function_type = FunctionType::get(ret_type, args, false);
+	function = Function::Create(function_type, Function::ExternalLinkage, name, module);
+
+	// arg names
+	Function::arg_iterator arg_it = function->arg_begin();
+	for(int i = 0; i < inputs.size(); i++)
+	{
+		std::ostringstream oss;
+		oss << "inp" << i;
+		arg_it->setName(oss.str());
+		arg_it++;
+	}
+}
+
+Function *ExternAST::CompiledFunction()
+{
+	return function;
+}
+
 /// CallAST
-CallAST::CallAST(FunctionAST *_function, BodyAST *_args)
+CallAST::CallAST(FunctionBaseAST *_function, BodyAST *_args)
 	: function(_function), args(_args)
 {
 }
