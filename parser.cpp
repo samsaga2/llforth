@@ -100,7 +100,7 @@ AST *Parser::AppendCore(const std::string &word)
 	else
 	{
 		std::string error("unknown token `");
-		error += lexer.word;
+		error += word;
 		error += "'";
 		throw error;
 	}
