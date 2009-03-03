@@ -43,7 +43,8 @@ OutputIndexAST *InferenceStack::Pop(TypeAST type)
 
 void InferenceStack::Push(AST *ast)
 {
-	stack.push_back(new Counter(ast));
+	if(ast->OutputSize() != 0)
+		stack.push_back(new Counter(ast));
 }
 
 void InferenceStack::Print()
