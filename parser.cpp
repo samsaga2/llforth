@@ -37,49 +37,65 @@ AST *Parser::AppendCore(const std::string &word)
 	if(word == "dup")
 	{
 		OutputIndexAST *arg1 = istack.Pop();
-		istack.Push(new DupAST(arg1));
+		AST *ast = new DupAST(arg1);
+		istack.Push(ast);
+		func_body->push_back(ast);
 	}
 	else if(word == "*")
 	{
 		OutputIndexAST *arg2 = istack.Pop();
 		OutputIndexAST *arg1 = istack.Pop();
-		istack.Push(new MultAST(arg1, arg2));
+		AST *ast = new MultAST(arg1, arg2);
+		istack.Push(ast);
+		func_body->push_back(ast);
 	}
 	else if(word == "+")
 	{
 		OutputIndexAST *arg2 = istack.Pop();
 		OutputIndexAST *arg1 = istack.Pop();
-		istack.Push(new AddAST(arg1, arg2));
+		AST *ast = new AddAST(arg1, arg2);
+		istack.Push(ast);
+		func_body->push_back(ast);
 	}
 	else if(word == "swap")
 	{
 		OutputIndexAST *arg2 = istack.Pop();
 		OutputIndexAST *arg1 = istack.Pop();
-		istack.Push(new SwapAST(arg1, arg2));
+		AST *ast = new SwapAST(arg1, arg2);
+		istack.Push(ast);
+		func_body->push_back(ast);
 	}
 	else if(word == "over")
 	{
 		OutputIndexAST *arg2 = istack.Pop();
 		OutputIndexAST *arg1 = istack.Pop();
-		istack.Push(new OverAST(arg1, arg2));
+		AST *ast = new OverAST(arg1, arg2);
+		istack.Push(ast);
+		func_body->push_back(ast);
 	}
 	else if(word == "rot")
 	{
 		OutputIndexAST *arg3 = istack.Pop();
 		OutputIndexAST *arg2 = istack.Pop();
 		OutputIndexAST *arg1 = istack.Pop();
-		istack.Push(new RotAST(arg1, arg2, arg3));
+		AST *ast = new RotAST(arg1, arg2, arg3);
+		istack.Push(ast);
+		func_body->push_back(ast);
 	}
 	else if(word == "\"")
 	{
 		lexer.ReadUntil(34);
-		istack.Push(new StringAST(lexer.word));
+		AST *ast = new StringAST(lexer.word);
+		istack.Push(ast);
+		func_body->push_back(ast);
 		lexer.NextToken();
 	}
 	else if(word == "drop")
 	{
 		OutputIndexAST *arg1 = istack.Pop();
-		istack.Push(new DropAST(arg1));
+		AST *ast = new DropAST(arg1);
+		istack.Push(ast);
+		func_body->push_back(ast);
 	}
 	else
 	{
@@ -108,7 +124,9 @@ void Parser::ParseBody(const std::string &end)
 		{
 			// append function call
 			BodyAST *args = istack.Pop(function->InputSize());
-			istack.Push(new CallAST(function, args));
+			AST *ast = new CallAST(function, args);
+			istack.Push(ast);
+			func_body->push_back(ast);
 		}
 		else
 			switch(token)
@@ -119,7 +137,11 @@ void Parser::ParseBody(const std::string &end)
 				break;
 			case Lexer::tok_integer:
 				// append literal integer
-				istack.Push(new IntegerAST(integer));
+				{
+					AST *ast = new IntegerAST(integer);
+					istack.Push(ast);
+					func_body->push_back(ast);
+				}
 				break;
 			case Lexer::tok_eof:
 				throw std::string("end of file");
@@ -139,19 +161,20 @@ FunctionAST *Parser::ParseFunction()
 	lexer.NextToken();
 
 	// parse function body
+	func_body = new BodyAST();
 	ParseBody(";");
-
-	// extract function body
-	BodyAST *func_body = new BodyAST();
-	for(std::list<InferenceStack::Counter *>::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
-		func_body->push_front((*it)->ast);
 
 	// extract function args
 	BodyAST *func_args = new BodyAST();
 	for(BodyAST::iterator it = istack.args.begin(); it != istack.args.end(); it++)
 		func_args->push_back(*it);
 
-	return new FunctionAST(func_name, func_body, func_args);
+	// extract outputs
+	BodyAST *func_outs = new BodyAST();
+	for(std::list<InferenceStack::Counter *>::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
+		func_outs->push_front((*it)->ast);
+
+	return new FunctionAST(func_name, func_body, func_args, func_outs);
 }
 
 TypeAST Parser::ConvertType(const std::string &type)

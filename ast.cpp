@@ -8,17 +8,16 @@ AST::AST() : compiled(false)
 
 void AST::Compile(IRBuilder<> builder)
 {
-	if(!compiled)
-	{
-		DoCompile(builder);
-		compiled = true;
-	}
-	else
-		assert(false);	
+	if(compiled)
+		return;
+
+	DoCompile(builder);
+	compiled = true;
 }
 
-Value *AST::GetValue(int index)
+Value *AST::GetValue(int index, IRBuilder<> builder)
 {
+	Compile(builder);
 	return values[index];
 }
 
@@ -149,9 +148,26 @@ AST *BodyAST::operator[](size_t index)
 	return (*it);
 }
 
+/// FunctionBaseAST
+const Type *FunctionBaseAST::ConvertType(TypeAST t)
+{
+	switch(t)
+	{
+		case TYPE_NULL:
+			throw std::string("not supported");
+
+		case TYPE_INT32:
+			return Type::Int32Ty;
+
+		case TYPE_STRING:
+			return PointerType::getUnqual(Type::Int8Ty);
+			//return ArrayType::get(Type::Int8Ty, 5);
+	}
+}
+
 /// FunctionAST
-FunctionAST::FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args)
-	: name(_name), body(_body), args(_args)
+FunctionAST::FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args, BodyAST *_outputs)
+	: name(_name), body(_body), args(_args), outputs(_outputs)
 {
 }
 
@@ -172,7 +188,7 @@ TypeAST FunctionAST::InputType(int index)
 
 TypeAST FunctionAST::OutputType(int index)
 {
-	return body->OutputType(index);
+	return outputs->OutputType(index);
 }
 
 int FunctionAST::InputSize()
@@ -182,7 +198,7 @@ int FunctionAST::InputSize()
 
 int FunctionAST::OutputSize()
 {
-	return body->OutputSize();
+	return outputs->OutputSize();
 }
 
 void PrintType(TypeAST t)
@@ -196,36 +212,18 @@ void PrintType(TypeAST t)
 	}
 }
 
-/// FunctionBaseAST
-const Type *FunctionBaseAST::ConvertType(TypeAST t)
-{
-	switch(t)
-	{
-		case TYPE_NULL:
-			throw std::string("not supported");
-
-		case TYPE_INT32:
-			return Type::Int32Ty;
-
-		case TYPE_STRING:
-			return PointerType::getUnqual(Type::Int8Ty);
-			//return ArrayType::get(Type::Int8Ty, 5);
-	}
-}
-
-// FunctionAST
 void FunctionAST::Print()
 {
-	std::cout << name << " (";
+	std::cout << ": " << name << " (";
 
 	for(int i = 0; i < args->OutputSize(); i++)
 		PrintType((*args)[i]->OutputType(0));
 
 	std::cout << " --";
 
-	for(int i = 0; i < body->OutputSize(); i++)
+	for(int i = 0; i < outputs->OutputSize(); i++)
 	{
-		AST* ast = (*body)[i];
+		AST* ast = (*outputs)[i];
 		for(size_t j = 0; j < ast->OutputSize(); j++)
 			PrintType(ast->OutputType(j));
 	}
@@ -233,14 +231,13 @@ void FunctionAST::Print()
 
 	for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
 	{
-		std::cout << std::endl << "  ";
+		std::cout << " ";
 		(*it)->Print();
 	}
-
-	std::cout << std::endl << std::endl;
+	std::cout << " ;" << std::endl << std::endl;
 }
 
-void FunctionAST::DoCompile(Module *module)
+void FunctionAST::Compile(Module *module)
 {
 	// function arguments types
 	std::vector<const Type *> args(OutputSize());
@@ -284,15 +281,16 @@ void FunctionAST::DoCompile(Module *module)
 	IRBuilder<> builder(entry);
 
 	// create body
-	std::vector<Value *> rets;
 	for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
+		(*it)->Compile(builder);
+
+	// create outputs
+	std::vector<Value *> rets;
+	for(BodyAST::iterator it = outputs->begin(); it != outputs->end(); it++)
 	{
 		AST *ast = *it;
 		for(int i = 0; i < ast->OutputSize(); i++)
-		{
-			ast->Compile(builder);
-			rets.push_back(ast->GetValue(i));
-		}
+			rets.push_back(ast->GetValue(i, builder));
 	}
 
 	// create outputs
@@ -365,7 +363,7 @@ void ExternAST::Print()
 	std::cout << std::endl << std::endl;
 }
 
-void ExternAST::DoCompile(Module *module)
+void ExternAST::Compile(Module *module)
 {
 	// function arguments types
 	std::vector<const Type *> args(inputs.size());
@@ -450,8 +448,7 @@ void CallAST::DoCompile(IRBuilder<> builder)
 		AST* arg = *it;
 		for(int i = 0; i < arg->OutputSize(); i++)
 		{
-			arg->Compile(builder);
-			Value *value = arg->GetValue(i);
+			Value *value = arg->GetValue(i, builder);
 			func_args.push_back(value);
 		}
 	}
@@ -553,8 +550,7 @@ void OutputIndexAST::Print()
 
 void OutputIndexAST::DoCompile(IRBuilder<> builder)
 {
-	ast->Compile(builder);
-	SetValue(0, ast->GetValue(index));
+	SetValue(0, ast->GetValue(index, builder));
 }
 
 /// DupAST
@@ -586,16 +582,13 @@ int DupAST::OutputSize()
 
 void DupAST::Print()
 {
-	arg1->Print();
-	std::cout << " ";
-	arg1->Print();
+	std::cout << "dup";
 }
 
 void DupAST::DoCompile(IRBuilder<> builder)
 {
-	arg1->Compile(builder);
-	SetValue(0, arg1->GetValue(0));
-	SetValue(1, arg1->GetValue(0));
+	SetValue(0, arg1->GetValue(0, builder));
+	SetValue(1, arg1->GetValue(0, builder));
 }
 
 /// MultAST
@@ -627,18 +620,12 @@ int MultAST::OutputSize()
 
 void MultAST::Print()
 {
-	std::cout << "(";
-	arg1->Print();
 	std::cout << "*";
-	arg2->Print();
-	std::cout << ")";
 }
 
 void MultAST::DoCompile(IRBuilder<> builder)
 {
-	arg1->Compile(builder),
-	arg2->Compile(builder);
-	SetValue(0, builder.CreateMul(arg1->GetValue(0), arg2->GetValue(0)));
+	SetValue(0, builder.CreateMul(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
 }
 
 /// AddAST
@@ -670,18 +657,14 @@ int AddAST::OutputSize()
 
 void AddAST::Print()
 {
-	std::cout << "(";
-	arg1->Print();
 	std::cout << "+";
-	arg2->Print();
-	std::cout << ")";
 }
 
 void AddAST::DoCompile(IRBuilder<> builder)
 {
-	arg1->Compile(builder);
-	arg2->Compile(builder);
-	SetValue(0, builder.CreateAdd(arg1->GetValue(0), arg2->GetValue(0)));
+	Value *v1 = arg1->GetValue(0, builder);
+	Value *v2 = arg2->GetValue(0, builder);
+	SetValue(0, builder.CreateAdd(v1, v2));
 }
 
 /// SwapAST
@@ -727,10 +710,8 @@ void SwapAST::Print()
 
 void SwapAST::DoCompile(IRBuilder<> builder)
 {
-	arg1->Compile(builder),
-	arg2->Compile(builder);
-	SetValue(0, arg1->GetValue(0));
-	SetValue(1, arg2->GetValue(0));
+	SetValue(0, arg1->GetValue(0, builder));
+	SetValue(1, arg2->GetValue(0, builder));
 }
 
 // OverAST
@@ -777,11 +758,9 @@ void OverAST::Print()
 
 void OverAST::DoCompile(IRBuilder<> builder)
 {
-	arg1->Compile(builder);
-	arg2->Compile(builder);
-	SetValue(0, arg1->GetValue(0));
-	SetValue(1, arg2->GetValue(0));
-	SetValue(2, arg1->GetValue(0));
+	SetValue(0, arg1->GetValue(0, builder));
+	SetValue(1, arg2->GetValue(0, builder));
+	SetValue(2, arg1->GetValue(0, builder));
 }
 
 /// RotAST
@@ -835,9 +814,9 @@ void RotAST::DoCompile(IRBuilder<> builder)
 {
 	arg1->Compile(builder);
 	arg2->Compile(builder);
-	SetValue(0, arg1->GetValue(0));
-	SetValue(2, arg2->GetValue(0));
-	SetValue(1, arg3->GetValue(0));
+	SetValue(0, arg1->GetValue(0, builder));
+	SetValue(2, arg2->GetValue(0, builder));
+	SetValue(1, arg3->GetValue(0, builder));
 }
 //
 /// DropAST
@@ -869,9 +848,7 @@ int DropAST::OutputSize()
 
 void DropAST::Print()
 {
-	std::cout << "[ ";
-	arg1->Print();
-	std::cout << " ]:*";
+	std::cout << "drop";
 }
 
 void DropAST::DoCompile(IRBuilder<> builder)

@@ -18,7 +18,7 @@ class AST
 public:
 	AST();
 	void Compile(IRBuilder<> builder);
-	Value *GetValue(int index);
+	Value *GetValue(int index, IRBuilder<> builder);
 	virtual TypeAST InputType(int index) = 0;
 	virtual TypeAST OutputType(int index) = 0;
 	virtual int InputSize() = 0;
@@ -89,9 +89,10 @@ class FunctionAST : public FunctionBaseAST
 	std::string name;
 	BodyAST *body;
 	BodyAST *args;
+	BodyAST *outputs;
 	Function *function;
 public:
-	FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args);
+	FunctionAST(const std::string &_name, BodyAST *_body, BodyAST *_args, BodyAST *_outputs);
 	const std::string Name();
 	TypeAST InputType(int index);
 	TypeAST OutputType(int index);

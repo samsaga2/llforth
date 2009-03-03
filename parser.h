@@ -11,6 +11,7 @@ public:
 	typedef std::list<FunctionBaseAST *> Functions;
 	Functions functions;
 	InferenceStack istack;
+	BodyAST *func_body;
 
 	Parser(Lexer &_lexer);
 	FunctionBaseAST *FindFunction(const std::string &word);

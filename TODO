@@ -1,3 +1,7 @@
+- Bug
+	extern puts ( s -- i )
+	: type ( s -- ) puts drop ;
+
 - if:
 	do inlines and add branch words
 	: if ,branch >r ; inline
