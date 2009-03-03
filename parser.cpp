@@ -36,48 +36,48 @@ AST *Parser::AppendCore(const std::string &word)
 {
 	if(word == "dup")
 	{
-		OutputIndexAST *arg1 = istack.Pop();
+		OutputIndexAST *arg1 = istack.Pop(TYPE_ANY);
 		AST *ast = new DupAST(arg1);
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
 	else if(word == "*")
 	{
-		OutputIndexAST *arg2 = istack.Pop();
-		OutputIndexAST *arg1 = istack.Pop();
+		OutputIndexAST *arg2 = istack.Pop(TYPE_INT32);
+		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
 		AST *ast = new MultAST(arg1, arg2);
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
 	else if(word == "+")
 	{
-		OutputIndexAST *arg2 = istack.Pop();
-		OutputIndexAST *arg1 = istack.Pop();
+		OutputIndexAST *arg2 = istack.Pop(TYPE_INT32);
+		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
 		AST *ast = new AddAST(arg1, arg2);
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
 	else if(word == "swap")
 	{
-		OutputIndexAST *arg2 = istack.Pop();
-		OutputIndexAST *arg1 = istack.Pop();
+		OutputIndexAST *arg2 = istack.Pop(TYPE_ANY);
+		OutputIndexAST *arg1 = istack.Pop(TYPE_ANY);
 		AST *ast = new SwapAST(arg1, arg2);
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
 	else if(word == "over")
 	{
-		OutputIndexAST *arg2 = istack.Pop();
-		OutputIndexAST *arg1 = istack.Pop();
+		OutputIndexAST *arg2 = istack.Pop(TYPE_ANY);
+		OutputIndexAST *arg1 = istack.Pop(TYPE_ANY);
 		AST *ast = new OverAST(arg1, arg2);
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
 	else if(word == "rot")
 	{
-		OutputIndexAST *arg3 = istack.Pop();
-		OutputIndexAST *arg2 = istack.Pop();
-		OutputIndexAST *arg1 = istack.Pop();
+		OutputIndexAST *arg3 = istack.Pop(TYPE_ANY);
+		OutputIndexAST *arg2 = istack.Pop(TYPE_ANY);
+		OutputIndexAST *arg1 = istack.Pop(TYPE_ANY);
 		AST *ast = new RotAST(arg1, arg2, arg3);
 		istack.Push(ast);
 		func_body->push_back(ast);
@@ -92,7 +92,7 @@ AST *Parser::AppendCore(const std::string &word)
 	}
 	else if(word == "drop")
 	{
-		OutputIndexAST *arg1 = istack.Pop();
+		OutputIndexAST *arg1 = istack.Pop(TYPE_ANY);
 		AST *ast = new DropAST(arg1);
 		istack.Push(ast);
 		func_body->push_back(ast);
@@ -123,7 +123,10 @@ void Parser::ParseBody(const std::string &end)
 		if(function != NULL)
 		{
 			// append function call
-			BodyAST *args = istack.Pop(function->InputSize());
+			BodyAST *args = new BodyAST();
+			for(size_t i = 0; i < function->InputSize(); i++)
+				args->push_back(istack.Pop(function->InputType(i)));
+
 			AST *ast = new CallAST(function, args);
 			istack.Push(ast);
 			func_body->push_back(ast);

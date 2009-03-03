@@ -139,8 +139,9 @@ protected:
 class ArgAST : public AST
 {
 	int n;
+	TypeAST type;
 public:
-	ArgAST(int _n);
+	ArgAST(int _n, TypeAST _type);
 	TypeAST InputType(int index);
 	TypeAST OutputType(int index);
 	int InputSize();

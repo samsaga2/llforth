@@ -1,5 +1,6 @@
 \ test file
 \ Victor M. <samsaga2@gmail.com>
 extern puts ( s -- i )
-: main " hello world!" puts ;
+: type ( s -- ) puts drop ;
+: main " hello world!" type ;
 

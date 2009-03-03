@@ -18,8 +18,7 @@ public:
 	BodyAST args;
 
 	void Clear();
-	OutputIndexAST *Pop();
-	BodyAST *Pop(int size);
+	OutputIndexAST *Pop(TypeAST type);
 	void Push(AST *ast);
 	void Print();
 };

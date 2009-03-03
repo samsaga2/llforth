@@ -178,12 +178,7 @@ const std::string FunctionAST::Name()
 
 TypeAST FunctionAST::InputType(int index)
 {
-	if(args->size() == 0)
-		assert(false);
-	else
-		assert(index < args->size());
-
-	return (*args)[index]->InputType(0);
+	return (*args)[index]->OutputType(0);
 }
 
 TypeAST FunctionAST::OutputType(int index)
@@ -240,9 +235,9 @@ void FunctionAST::Print()
 void FunctionAST::Compile(Module *module)
 {
 	// function arguments types
-	std::vector<const Type *> args(OutputSize());
+	std::vector<const Type *> args(InputSize());
 	for(size_t i = 0; i < args.size(); i++)
-		args[i] = ConvertType(OutputType(i));
+		args[i] = ConvertType(InputType(i));
 
 	// function output types
 	const Type *ret_type;
@@ -266,7 +261,6 @@ void FunctionAST::Compile(Module *module)
 	FunctionType *function_type = FunctionType::get(ret_type, args, false);
 	function = Function::Create(function_type, Function::ExternalLinkage, name, module);
 
-	// arg names
 	Function::arg_iterator arg_it = function->arg_begin();
 	for(int i = 0; i < OutputSize(); i++)
 	{
@@ -445,14 +439,12 @@ void CallAST::DoCompile(IRBuilder<> builder)
 	std::vector<Value *> func_args;
 	for(BodyAST::iterator it = args->begin(); it != args->end(); it++)
 	{
-		AST* arg = *it;
-		for(int i = 0; i < arg->OutputSize(); i++)
-		{
-			Value *value = arg->GetValue(i, builder);
-			func_args.push_back(value);
-		}
+		Value *value = (*it)->GetValue(0, builder);
+		func_args.push_back(value);
 	}
+
 	Value *result = builder.CreateCall<std::vector<Value *>::iterator>(compiled_function, func_args.begin(), func_args.end());
+
 	switch(function->OutputSize())
 	{
 		case 0: break; // nothing
@@ -468,7 +460,7 @@ void CallAST::DoCompile(IRBuilder<> builder)
 }
 
 /// ArgAST
-ArgAST::ArgAST(int _n) : n(_n)
+ArgAST::ArgAST(int _n, TypeAST _type) : n(_n), type(_type)
 {
 }
 
@@ -481,7 +473,7 @@ TypeAST ArgAST::InputType(int index)
 TypeAST ArgAST::OutputType(int index)
 {
 	assert(index == 0);
-	return TYPE_ANY;
+	return type;
 }
 
 int ArgAST::InputSize()

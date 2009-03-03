@@ -11,7 +11,7 @@ void InferenceStack::Clear()
 	args.clear();
 }
 
-OutputIndexAST *InferenceStack::Pop()
+OutputIndexAST *InferenceStack::Pop(TypeAST type)
 {
 	while(stack.back()->index == 0)
 	{
@@ -21,7 +21,7 @@ OutputIndexAST *InferenceStack::Pop()
 
 	if(stack.size() == 0)
 	{
-		AST *arg = new ArgAST(args.size());
+		AST *arg = new ArgAST(args.size(), type);
 		args.push_back(arg);
 		Push(arg);
 	}
@@ -29,6 +29,8 @@ OutputIndexAST *InferenceStack::Pop()
 	assert(stack.size() != 0);
 	Counter *counter = stack.back();
 	OutputIndexAST *stack_index = new OutputIndexAST(counter->ast, --counter->index);
+
+	assert(stack_index->OutputType(0) == type || type == TYPE_ANY);
 
 	if(counter->index == 0)
 	{
@@ -39,21 +41,10 @@ OutputIndexAST *InferenceStack::Pop()
 	return stack_index;
 }
 
-BodyAST *InferenceStack::Pop(int size)
-{
-	BodyAST *body = new BodyAST();
-	while(size > 0)
-	{
-		body->push_back(Pop());
-		size--;
-	}
-}
-
 void InferenceStack::Push(AST *ast)
 {
 	stack.push_back(new Counter(ast));
 }
-
 
 void InferenceStack::Print()
 {
