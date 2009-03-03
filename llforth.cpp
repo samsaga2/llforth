@@ -11,6 +11,7 @@ using namespace llvm;
 using namespace std;
 
 static bool verbose = false;
+static std::string input_filename("test.llfs");
 static std::string output_filename("a.obj");
 static bool optimize = false;
 
@@ -21,6 +22,7 @@ void show_help()
 	cout << "  -v         	verbose output" << endl;
 	cout << "  -o filename	object filename" << endl;
 	cout << "  -O         	run optimize passes" << endl;
+	cout << "  -i         	input filename" << endl;
 	exit(0);
 }
 
@@ -30,7 +32,7 @@ void read_args(int argc, char **argv)
 	extern char *optarg;
 	extern int optopt;
 
-	while((c = getopt(argc, argv, "vho:O")) != -1)
+	while((c = getopt(argc, argv, "vho:Oi:")) != -1)
 		switch(c)
 		{
 		case 'h':
@@ -45,6 +47,9 @@ void read_args(int argc, char **argv)
 		case 'O':
 			optimize = true;
 			break;
+		case 'i':
+			input_filename = optarg;
+			break;
 		case '?':
 			cerr << "Unknown option -" << (char)optopt << endl;
 		}
@@ -52,7 +57,7 @@ void read_args(int argc, char **argv)
 
 void compile()
 {
-	std::ifstream in("test.llfs");
+	std::ifstream in(input_filename.c_str());
 	Lexer lexer(in);
 	lexer.NextToken();
 
