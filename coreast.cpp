@@ -1,6 +1,8 @@
 #include "coreast.h"
 #include <iostream>
 
+using namespace std;
+
 /// IntegerAST
 IntegerAST::IntegerAST(int _integer) : integer(_integer)
 {
@@ -30,7 +32,7 @@ int IntegerAST::OutputSize()
 
 void IntegerAST::Print()
 {
-	std::cout << integer;
+	cout << integer;
 }
 
 void IntegerAST::DoCompile(IRBuilder<> builder)
@@ -39,7 +41,7 @@ void IntegerAST::DoCompile(IRBuilder<> builder)
 }
 
 /// StringAST
-StringAST::StringAST(const std::string &_str) : str(_str)
+StringAST::StringAST(const string &_str) : str(_str)
 {
 }
 
@@ -67,7 +69,7 @@ int StringAST::OutputSize()
 
 void StringAST::Print()
 {
-	std::cout << "\"" << str << "\"";
+	cout << "\"" << str << "\"";
 }
 
 void StringAST::DoCompile(IRBuilder<> builder)
@@ -103,20 +105,20 @@ int CallAST::OutputSize()
 
 void CallAST::Print() 
 {
-	std::cout << function->Name(); 
+	cout << function->Name(); 
 }
 
 void CallAST::DoCompile(IRBuilder<> builder)
 {
 	Function *compiled_function = function->CompiledFunction();
-	std::vector<Value *> func_args;
+	vector<Value *> func_args;
 	for(BodyAST::iterator it = args->begin(); it != args->end(); it++)
 	{
 		Value *value = (*it)->GetValue(0, builder);
 		func_args.push_back(value);
 	}
 
-	Value *result = builder.CreateCall<std::vector<Value *>::iterator>(compiled_function, func_args.begin(), func_args.end());
+	Value *result = builder.CreateCall<vector<Value *>::iterator>(compiled_function, func_args.begin(), func_args.end());
 
 	switch(function->OutputSize())
 	{
@@ -161,7 +163,7 @@ int ArgAST::OutputSize()
 
 void ArgAST::Print()
 {
-	std::cout << "arg" << n;
+	cout << "arg" << n;
 }
 
 void ArgAST::DoCompile(IRBuilder<> builder)
@@ -207,9 +209,9 @@ void OutputIndexAST::Print()
 		ast->Print();
 	else
 	{
-		std::cout << "[";
+		cout << "[";
 		ast->Print();
-		std::cout << "]:" << index;
+		cout << "]:" << index;
 	}
 }
 
@@ -247,7 +249,7 @@ int DupAST::OutputSize()
 
 void DupAST::Print()
 {
-	std::cout << "dup";
+	cout << "dup";
 }
 
 void DupAST::DoCompile(IRBuilder<> builder)
@@ -285,7 +287,7 @@ int MultAST::OutputSize()
 
 void MultAST::Print()
 {
-	std::cout << "*";
+	cout << "*";
 }
 
 void MultAST::DoCompile(IRBuilder<> builder)
@@ -322,7 +324,7 @@ int AddAST::OutputSize()
 
 void AddAST::Print()
 {
-	std::cout << "+";
+	cout << "+";
 }
 
 void AddAST::DoCompile(IRBuilder<> builder)
@@ -369,7 +371,7 @@ int SwapAST::OutputSize()
 void SwapAST::Print()
 {
 	arg2->Print();
-	std::cout << " ";
+	cout << " ";
 	arg1->Print();
 }
 
@@ -415,9 +417,9 @@ int OverAST::OutputSize()
 void OverAST::Print()
 {
 	arg1->Print();
-	std::cout << " ";
+	cout << " ";
 	arg2->Print();
-	std::cout << " ";
+	cout << " ";
 	arg1->Print();
 }
 
@@ -469,9 +471,9 @@ int RotAST::OutputSize()
 void RotAST::Print()
 {
 	arg2->Print();
-	std::cout << " ";
+	cout << " ";
 	arg3->Print();
-	std::cout << " ";
+	cout << " ";
 	arg1->Print();
 }
 
@@ -513,7 +515,7 @@ int DropAST::OutputSize()
 
 void DropAST::Print()
 {
-	std::cout << "drop";
+	cout << "drop";
 }
 
 void DropAST::DoCompile(IRBuilder<> builder)
