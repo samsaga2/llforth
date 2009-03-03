@@ -7,16 +7,8 @@
 class InferenceStack
 {
 public:
-	class Counter
-	{
-	public:
-		AST *ast;
-		int index;
-		Counter(AST *_ast);
-	};
-
-	std::list<Counter*> stack;
-	BodyAST args;
+	OutputList stack;
+	ArgumentsList args;
 
 	void Clear();
 	OutputIndexAST *Pop(TypeAST type);

@@ -48,36 +48,6 @@ protected:
 	void DoCompile(IRBuilder<> builder);
 };
 
-class ArgAST : public AST
-{
-	int n;
-	TypeAST type;
-public:
-	ArgAST(int _n, TypeAST _type);
-	TypeAST InputType(int index);
-	TypeAST OutputType(int index);
-	int InputSize();
-	int OutputSize();
-	void Print();
-protected:
-	void DoCompile(IRBuilder<> builder);
-};
-
-class OutputIndexAST : public AST
-{
-	AST *ast;
-	int index;
-public:
-	OutputIndexAST(AST *_ast, int _index);
-	TypeAST InputType(int index);
-	TypeAST OutputType(int index);
-	int InputSize();
-	int OutputSize();
-	void Print();
-protected:
-	void DoCompile(IRBuilder<> builder);
-};
-
 class DupAST : public AST
 {
 	OutputIndexAST *arg1;

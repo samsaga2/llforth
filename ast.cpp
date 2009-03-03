@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sstream>
 
+using namespace std;
+
 /// AST
 AST::AST() : compiled(false)
 {
@@ -59,7 +61,7 @@ void BodyAST::Print()
 {
 	for(BodyAST::iterator it = this->begin(); it != this->end(); it++)
 	{
-		std::cout << " ";
+		cout << " ";
 		(*it)->Print();
 	}
 }
@@ -73,5 +75,91 @@ AST *BodyAST::operator[](size_t index)
 		it++;
 	}
 	return (*it);
+}
+
+/// ArgAST
+ArgAST::ArgAST(int _n, TypeAST _type) : n(_n), type(_type)
+{
+}
+
+TypeAST ArgAST::InputType(int index)
+{
+	assert(false);
+	return TYPE_NULL;
+}
+
+TypeAST ArgAST::OutputType(int index)
+{
+	assert(index == 0);
+	return type;
+}
+
+int ArgAST::InputSize()
+{
+	return 1;
+}
+
+int ArgAST::OutputSize()
+{
+	return 1;
+}
+
+void ArgAST::Print()
+{
+	cout << "arg" << n;
+}
+
+void ArgAST::DoCompile(IRBuilder<> builder)
+{
+	BasicBlock *bb = builder.GetInsertBlock();
+	Function *f = bb->getParent();
+	Function::arg_iterator arg_it = f->arg_begin();
+	for(int i = 0; i < n; i++,arg_it++);
+	SetValue(0, arg_it);
+}
+
+/// OutputIndexAST
+OutputIndexAST::OutputIndexAST(AST *_ast, int _index)
+	: ast(_ast), index(_index)
+{
+}
+
+TypeAST OutputIndexAST::InputType(int index)
+{
+	assert(false);
+	return TYPE_NULL;
+}
+
+TypeAST OutputIndexAST::OutputType(int index)
+{
+	assert(index == 0);
+	return ast->OutputType(this->index);
+}
+
+int OutputIndexAST::InputSize()
+{
+	return 0;
+}
+
+int OutputIndexAST::OutputSize()
+{
+	return 1;
+}
+
+void OutputIndexAST::Print()
+{
+	if(ast->OutputSize() == 1)
+		ast->Print();
+	else
+	{
+		cout << "[";
+		ast->Print();
+		cout << "]:" << index;
+	}
+}
+
+void OutputIndexAST::DoCompile(IRBuilder<> builder)
+{
+	SetValue(0, ast->GetValue(index, builder));
 }
 

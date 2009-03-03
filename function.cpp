@@ -22,7 +22,7 @@ const Type *FunctionBaseAST::ConvertType(TypeAST t)
 }
 
 /// FunctionAST
-FunctionAST::FunctionAST(const string &_name, BodyAST *_body, BodyAST *_args, BodyAST *_outputs)
+FunctionAST::FunctionAST(const string &_name, BodyAST *_body, list<ArgAST *> *_args, list<OutputIndexAST *> *_outputs)
 	: name(_name), body(_body), args(_args), outputs(_outputs)
 {
 }
@@ -34,22 +34,34 @@ const string FunctionAST::Name()
 
 TypeAST FunctionAST::InputType(int index)
 {
-	return (*args)[index]->OutputType(0);
+	ArgumentsList::iterator it = args->begin();
+	while(it != args->end() && index > 0)
+	{
+		index--;
+		it++;
+	}
+	return (*it)->OutputType(0);
 }
 
 TypeAST FunctionAST::OutputType(int index)
 {
-	return outputs->OutputType(index);
+	OutputList::iterator it = outputs->begin();
+	while(it != outputs->end() && index > 0)
+	{
+		index--;
+		it++;
+	}
+	return (*it)->OutputType(0);
 }
 
 int FunctionAST::InputSize()
 {
-	return args->OutputSize();
+	return args->size();
 }
 
 int FunctionAST::OutputSize()
 {
-	return outputs->OutputSize();
+	return outputs->size();
 }
 
 void PrintType(TypeAST t)
@@ -68,16 +80,13 @@ void FunctionAST::Print()
 	cout << ": " << name << " (";
 
 	for(size_t i = 0; i < args->size(); i++)
-		PrintType((*args)[i]->OutputType(0));
+		PrintType(InputType(i));
 
 	cout << " --";
 
 	for(size_t i = 0; i < outputs->size(); i++)
-	{
-		AST* ast = (*outputs)[i];
-		for(size_t j = 0; j < ast->OutputSize(); j++)
-			PrintType(ast->OutputType(j));
-	}
+		PrintType(OutputType(i));
+
 	cout << " )";
 
 	for(BodyAST::iterator it = body->begin(); it != body->end(); it++)
@@ -85,7 +94,7 @@ void FunctionAST::Print()
 		cout << " ";
 		(*it)->Print();
 	}
-	cout << " ;" << std::endl;
+	cout << " ;" << endl;
 }
 
 void FunctionAST::Compile(Module *module)
@@ -136,12 +145,8 @@ void FunctionAST::Compile(Module *module)
 
 	// create outputs
 	vector<Value *> rets;
-	for(BodyAST::iterator it = outputs->begin(); it != outputs->end(); it++)
-	{
-		AST *ast = *it;
-		for(int i = 0; i < ast->OutputSize(); i++)
-			rets.push_back(ast->GetValue(i, builder));
-	}
+	for(OutputList::iterator it = outputs->begin(); it != outputs->end(); it++)
+		rets.push_back((*it)->GetValue(0, builder));
 
 	// create outputs
 	switch(OutputSize())
@@ -164,7 +169,7 @@ Function *FunctionAST::CompiledFunction()
 }
 
 /// ExternAST
-ExternAST::ExternAST(const string &_name, std::vector<TypeAST> _inputs, std::vector<TypeAST> _outputs)
+ExternAST::ExternAST(const string &_name, vector<TypeAST> _inputs, vector<TypeAST> _outputs)
 	: name(_name), inputs(_inputs), outputs(_outputs)
 {
 }
@@ -208,7 +213,7 @@ void ExternAST::Print()
 	for(int i = 0; i < outputs.size(); i++)
 		PrintType(outputs[i]);
 
-	cout << " )" << std::endl;
+	cout << " )" << endl;
 }
 
 void ExternAST::Compile(Module *module)

@@ -168,14 +168,14 @@ FunctionAST *Parser::ParseFunction()
 	ParseBody(";");
 
 	// extract function args
-	BodyAST *func_args = new BodyAST();
-	for(BodyAST::iterator it = istack.args.begin(); it != istack.args.end(); it++)
+	ArgumentsList *func_args = new ArgumentsList();
+	for(ArgumentsList::iterator it = istack.args.begin(); it != istack.args.end(); it++)
 		func_args->push_back(*it);
 
 	// extract outputs
-	BodyAST *func_outs = new BodyAST();
-	for(std::list<InferenceStack::Counter *>::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
-		func_outs->push_back((*it)->ast);
+	OutputList *func_outs = new OutputList();
+	for(OutputList::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
+		func_outs->push_back(*it);
 
 	return new FunctionAST(func_name, func_body, func_args, func_outs);
 }
