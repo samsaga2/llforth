@@ -1,7 +1,10 @@
 \ test file
 \ Victor M. <samsaga2@gmail.com>
 extern puts ( s -- i )
+extern malloc ( i -- i )
+extern free ( i -- )
+extern strcpy ( s s -- s )
+: test 5 malloc dup ;
 : type ( s -- ) puts drop ;
-: test 1 2 + ;
 : main " hello world!" type ;
 

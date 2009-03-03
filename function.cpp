@@ -67,12 +67,12 @@ void FunctionAST::Print()
 {
 	cout << ": " << name << " (";
 
-	for(int i = 0; i < args->OutputSize(); i++)
+	for(size_t i = 0; i < args->size(); i++)
 		PrintType((*args)[i]->OutputType(0));
 
 	cout << " --";
 
-	for(int i = 0; i < outputs->OutputSize(); i++)
+	for(size_t i = 0; i < outputs->size(); i++)
 	{
 		AST* ast = (*outputs)[i];
 		for(size_t j = 0; j < ast->OutputSize(); j++)

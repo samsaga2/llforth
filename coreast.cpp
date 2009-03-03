@@ -254,8 +254,9 @@ void DupAST::Print()
 
 void DupAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, arg1->GetValue(0, builder));
-	SetValue(1, arg1->GetValue(0, builder));
+	Value *v = arg1->GetValue(0, builder);
+	SetValue(0, v);
+	SetValue(1, v);
 }
 
 /// MultAST
