@@ -2,5 +2,6 @@
 \ Victor M. <samsaga2@gmail.com>
 extern puts ( s -- i )
 : type ( s -- ) puts drop ;
+: test 1 2 + ;
 : main " hello world!" type ;
 

@@ -116,7 +116,7 @@ void FunctionAST::Compile(Module *module)
 	function = Function::Create(function_type, Function::ExternalLinkage, name, module);
 
 	Function::arg_iterator arg_it = function->arg_begin();
-	for(int i = 0; i < OutputSize(); i++)
+	for(int i = 0; i < InputSize(); i++)
 	{
 		std::ostringstream oss;
 		oss << "inp" << i;

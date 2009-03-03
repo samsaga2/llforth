@@ -1,7 +1,8 @@
 #pragma once
 
-#include "ast.h"
 #include <vector>
+#include "ast.h"
+#include "coreast.h"
 
 class InferenceStack
 {
