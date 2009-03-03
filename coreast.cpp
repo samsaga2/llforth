@@ -331,11 +331,7 @@ int OverAST::OutputSize()
 
 void OverAST::Print()
 {
-	arg1->Print();
-	cout << " ";
-	arg2->Print();
-	cout << " ";
-	arg1->Print();
+	cout << "over";
 }
 
 void OverAST::DoCompile(IRBuilder<> builder)
@@ -385,11 +381,7 @@ int RotAST::OutputSize()
 
 void RotAST::Print()
 {
-	arg2->Print();
-	cout << " ";
-	arg3->Print();
-	cout << " ";
-	arg1->Print();
+	cout << "rot";
 }
 
 void RotAST::DoCompile(IRBuilder<> builder)

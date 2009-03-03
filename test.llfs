@@ -4,7 +4,7 @@ extern puts ( s -- i )
 extern malloc ( i -- i )
 extern free ( i -- )
 extern strcpy ( s s -- s )
-: test 5 malloc dup ;
+: test 5 malloc " hola" over ;
 : type ( s -- ) puts drop ;
 : main " hello world!" type ;
 
