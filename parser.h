@@ -6,14 +6,13 @@
 
 class Parser
 {
-public:
-	Lexer lexer;
+	Lexer *lexer;
 	typedef std::list<FunctionBaseAST *> Functions;
 	Functions functions;
 	InferenceStack istack;
 	BodyAST *func_body;
-
-	Parser(Lexer &_lexer);
+public:
+	Parser(Lexer *_lexer);
 	FunctionBaseAST *FindFunction(const std::string &word);
 	void MainLoop();
 	void Compile(Module *module);

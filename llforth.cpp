@@ -58,11 +58,18 @@ void read_args(int argc, char **argv)
 void compile()
 {
 	std::ifstream in(input_filename.c_str());
-	Lexer lexer(in);
-	lexer.NextToken();
 
-	Parser parser(lexer);
-	parser.MainLoop();
+	Lexer lexer(in);
+	Parser parser(&lexer);
+
+	try
+	{
+		lexer.NextToken();
+		parser.MainLoop();
+	}
+	catch(EndOfStream &eof)
+	{
+	}
 
 	// create llvm module
 	Module module("llforth");

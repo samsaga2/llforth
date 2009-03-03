@@ -2,15 +2,22 @@
 
 #include <istream>
 
+class EndOfStream : std::exception
+{
+	virtual const char *what() const throw()
+	{
+		return "End of stream";
+	}
+};
+
 class Lexer
 {
 public:
 	enum Token
 	{
-		tok_eof = -1,
-		tok_word = -2,
-		tok_integer = -3,
-		tok_float = -4
+		tok_word,
+		tok_integer,
+		tok_float
 	};
 
 	std::istream &in;

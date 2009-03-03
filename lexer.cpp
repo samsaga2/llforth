@@ -11,10 +11,7 @@ Lexer::Lexer(istream &_in) : in(_in)
 void Lexer::NextWord()
 {
 	if(!(in >> word))
-	{
-		token = tok_eof;
-		return;
-	}
+		throw EndOfStream();
 
 	token = tok_word;
 }
@@ -22,8 +19,6 @@ void Lexer::NextWord()
 void Lexer::NextToken()
 {
 	NextWord();
-	if(token == tok_eof)
-		return;
 
 	if(word == "\\")
 	{
@@ -62,19 +57,16 @@ void Lexer::ReadUntil(char u)
 	do
 	{
 		char c = in.get();
-		if(c == u)
-			return;
+		if(c == u) break;
 		word += c;
 	}
-	while(!in.eof());
-
-	token = tok_eof;
+	while(true);
 }
 
 void Lexer::ReadLine()
 {
 	if(!getline(in, word))
-		token = tok_eof;
+		throw EndOfStream();
 	else
 		token = tok_word;
 }
@@ -85,9 +77,7 @@ void Lexer::Skip(const string &open, const string &close)
 	while(true)
 	{
 		NextToken();
-		if(token == tok_eof)
-			break;
-		else if(word == close)
+		if(word == close)
 		{
 			NextToken();
 			break;
