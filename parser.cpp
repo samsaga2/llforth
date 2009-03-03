@@ -97,6 +97,13 @@ AST *Parser::AppendCore(const std::string &word)
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
+	else if(word == "i>s")
+	{
+		OutputIndexAST *arg1 = istack.Pop(TYPE_ANY);
+		AST *ast = new CastIntToStringAST(arg1);
+		istack.Push(ast);
+		func_body->push_back(ast);
+	}
 	else
 	{
 		std::string error("unknown token `");

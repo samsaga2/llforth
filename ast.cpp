@@ -15,12 +15,15 @@ void AST::Compile(IRBuilder<> builder)
 		return;
 
 	DoCompile(builder);
+	assert(values.size() == OutputSize());
+
 	compiled = true;
 }
 
 Value *AST::GetValue(int index, IRBuilder<> builder)
 {
 	Compile(builder);
+	assert(index < values.size());
 	return values[index];
 }
 

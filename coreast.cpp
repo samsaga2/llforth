@@ -390,7 +390,7 @@ void RotAST::DoCompile(IRBuilder<> builder)
 	SetValue(2, arg2->GetValue(builder));
 	SetValue(1, arg3->GetValue(builder));
 }
-//
+
 /// DropAST
 DropAST::DropAST(OutputIndexAST *_arg1) : arg1(_arg1)
 {
@@ -426,5 +426,44 @@ void DropAST::Print()
 void DropAST::DoCompile(IRBuilder<> builder)
 {
 	arg1->Compile(builder);
+}
+
+/// CastIntToStringAST
+CastIntToStringAST::CastIntToStringAST(OutputIndexAST *_arg1) : arg1(_arg1)
+{
+}
+
+TypeAST CastIntToStringAST::InputType(int index)
+{
+	assert(index == 0);
+	return TYPE_INT32;
+}
+
+TypeAST CastIntToStringAST::OutputType(int index)
+{
+	assert(index == 0);
+	return TYPE_STRING;
+}
+
+int CastIntToStringAST::InputSize()
+{
+	return 1;
+}
+
+int CastIntToStringAST::OutputSize()
+{
+	return 1;
+}
+
+void CastIntToStringAST::Print()
+{
+	cout << "i>s";
+}
+
+void CastIntToStringAST::DoCompile(IRBuilder<> builder)
+{
+	Value *value = arg1->GetValue(builder);
+	Type *string_type = PointerType::getUnqual(Type::Int8Ty);
+	SetValue(0, builder.CreateIntToPtr(value, string_type));
 }
 

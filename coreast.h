@@ -152,3 +152,18 @@ protected:
 	void DoCompile(IRBuilder<> builder);
 };
 
+class CastIntToStringAST : public AST
+{
+	OutputIndexAST *arg1;
+public:
+	CastIntToStringAST(OutputIndexAST *_arg1);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
+	int InputSize();
+	int OutputSize();
+	void Print();
+protected:
+	void DoCompile(IRBuilder<> builder);
+};
+
+
