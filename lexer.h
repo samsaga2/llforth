@@ -9,13 +9,15 @@ public:
 	{
 		tok_eof = -1,
 		tok_word = -2,
-		tok_integer = -3
+		tok_integer = -3,
+		tok_float = -4
 	};
 
 	std::istream &in;
 	int token;
 	std::string word;
-	int integer;
+	int number_integer;
+	float number_float;
 
 	Lexer(std::istream &_in);
 

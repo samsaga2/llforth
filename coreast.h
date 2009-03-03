@@ -7,9 +7,9 @@
 
 class IntegerAST : public AST
 {
-	int integer;
+	int number;
 public:
-	IntegerAST(int _integer);
+	IntegerAST(int _number);
 	TypeAST InputType(int index);
 	TypeAST OutputType(int index);
 	int InputSize();
@@ -24,6 +24,20 @@ class StringAST : public AST
 	std::string str;
 public:
 	StringAST(const std::string &str);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
+	int InputSize();
+	int OutputSize();
+	void Print();
+protected:
+	void DoCompile(IRBuilder<> builder);
+};
+
+class FloatAST : public AST
+{
+	float number;
+public:
+	FloatAST(float _number);
 	TypeAST InputType(int index);
 	TypeAST OutputType(int index);
 	int InputSize();
@@ -77,12 +91,27 @@ protected:
 	void DoCompile(IRBuilder<> builder);
 };
 
-class AddAST : public AST
+class AddIntegerAST : public AST
 {
 	OutputIndexAST *arg1;
 	OutputIndexAST *arg2;
 public:
-	AddAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	AddIntegerAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
+	TypeAST InputType(int index);
+	TypeAST OutputType(int index);
+	int InputSize();
+	int OutputSize();
+	void Print();
+protected:
+	void DoCompile(IRBuilder<> builder);
+};
+
+class AddFloatAST : public AST
+{
+	OutputIndexAST *arg1;
+	OutputIndexAST *arg2;
+public:
+	AddFloatAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2);
 	TypeAST InputType(int index);
 	TypeAST OutputType(int index);
 	int InputSize();

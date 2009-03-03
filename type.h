@@ -9,6 +9,7 @@ enum TypeAST
 	TYPE_NULL,
 	TYPE_INT32,
 	TYPE_STRING,
+	TYPE_FLOAT,
 	TYPE_ANY
 };
 

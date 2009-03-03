@@ -4,7 +4,7 @@
 using namespace std;
 
 /// IntegerAST
-IntegerAST::IntegerAST(int _integer) : integer(_integer)
+IntegerAST::IntegerAST(int _number) : number(_number)
 {
 }
 
@@ -32,12 +32,49 @@ int IntegerAST::OutputSize()
 
 void IntegerAST::Print()
 {
-	cout << integer;
+	cout << number;
 }
 
 void IntegerAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, ConstantInt::get(APInt(32, integer)));
+	SetValue(0, ConstantInt::get(APInt(32, number)));
+}
+
+/// FloatAST
+FloatAST::FloatAST(float _number) : number(_number)
+{
+}
+
+TypeAST FloatAST::InputType(int index)
+{
+	assert(false);
+	return TYPE_NULL;
+}
+
+TypeAST FloatAST::OutputType(int index)
+{
+	assert(index == 0);
+	return TYPE_FLOAT;
+}
+
+int FloatAST::InputSize()
+{
+	return 0;
+}
+
+int FloatAST::OutputSize()
+{
+	return 1;
+}
+
+void FloatAST::Print()
+{
+	cout << number;
+}
+
+void FloatAST::DoCompile(IRBuilder<> builder)
+{
+	SetValue(0, ConstantFP::get(APFloat(number)));
 }
 
 /// StringAST
@@ -210,39 +247,78 @@ void MultAST::DoCompile(IRBuilder<> builder)
 	SetValue(0, builder.CreateMul(arg1->GetValue(builder), arg2->GetValue(builder)));
 }
 
-/// AddAST
-AddAST::AddAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2)
+/// AddIntegerAST
+AddIntegerAST::AddIntegerAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2)
 {
 }
 
-TypeAST AddAST::InputType(int index)
+TypeAST AddIntegerAST::InputType(int index)
 {
 	assert(index == 0 || index == 1);
 	return TYPE_INT32;
 }
 
-TypeAST AddAST::OutputType(int index)
+TypeAST AddIntegerAST::OutputType(int index)
 {
 	assert(index == 0);
 	return TYPE_INT32;
 }
 
-int AddAST::InputSize()
+int AddIntegerAST::InputSize()
 {
 	return 2;
 }
 
-int AddAST::OutputSize()
+int AddIntegerAST::OutputSize()
 {
 	return 1;
 }
 
-void AddAST::Print()
+void AddIntegerAST::Print()
 {
 	cout << "+";
 }
 
-void AddAST::DoCompile(IRBuilder<> builder)
+void AddIntegerAST::DoCompile(IRBuilder<> builder)
+{
+	Value *v1 = arg1->GetValue(builder);
+	Value *v2 = arg2->GetValue(builder);
+	SetValue(0, builder.CreateAdd(v1, v2));
+}
+
+/// AddFloatAST
+AddFloatAST::AddFloatAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), arg2(_arg2)
+{
+}
+
+TypeAST AddFloatAST::InputType(int index)
+{
+	assert(index == 0 || index == 1);
+	return TYPE_FLOAT;
+}
+
+TypeAST AddFloatAST::OutputType(int index)
+{
+	assert(index == 0);
+	return TYPE_FLOAT;
+}
+
+int AddFloatAST::InputSize()
+{
+	return 2;
+}
+
+int AddFloatAST::OutputSize()
+{
+	return 1;
+}
+
+void AddFloatAST::Print()
+{
+	cout << "+";
+}
+
+void AddFloatAST::DoCompile(IRBuilder<> builder)
 {
 	Value *v1 = arg1->GetValue(builder);
 	Value *v2 = arg2->GetValue(builder);

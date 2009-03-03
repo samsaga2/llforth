@@ -2,7 +2,9 @@
 #include <sstream>
 #include <assert.h>
 
-Lexer::Lexer(std::istream &_in) : in(_in)
+using namespace std;
+
+Lexer::Lexer(istream &_in) : in(_in)
 {
 }
 
@@ -32,10 +34,18 @@ void Lexer::NextToken()
 		Skip("(", ")");
 	else if(word == "(*")
 		Skip("(*", "*)");
+	else if(word.find('.') != string::npos)
+	{
+		// float?
+		istringstream iss(word);
+		if(iss >> number_float)
+			token = tok_float;
+	}
 	else
 	{
-		std::istringstream iss(word);
-		if(iss >> integer)
+		// integer?
+		istringstream iss(word);
+		if(iss >> number_integer)
 			token = tok_integer;
 	}
 }
@@ -63,13 +73,13 @@ void Lexer::ReadUntil(char u)
 
 void Lexer::ReadLine()
 {
-	if(!std::getline(in, word))
+	if(!getline(in, word))
 		token = tok_eof;
 	else
 		token = tok_word;
 }
 
-void Lexer::Skip(const std::string &open, const std::string &close)
+void Lexer::Skip(const string &open, const string &close)
 {
 	assert(word == open);
 	while(true)

@@ -53,7 +53,15 @@ AST *Parser::AppendCore(const std::string &word)
 	{
 		OutputIndexAST *arg2 = istack.Pop(TYPE_INT32);
 		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new AddAST(arg1, arg2);
+		AST *ast = new AddIntegerAST(arg1, arg2);
+		istack.Push(ast);
+		func_body->push_back(ast);
+	}
+	else if(word == "+.")
+	{
+		OutputIndexAST *arg2 = istack.Pop(TYPE_FLOAT);
+		OutputIndexAST *arg1 = istack.Pop(TYPE_FLOAT);
+		AST *ast = new AddFloatAST(arg1, arg2);
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
@@ -123,7 +131,8 @@ void Parser::ParseBody(const std::string &end)
 
 		std::string word = lexer.word;
 		int token = lexer.token;
-		int integer = lexer.integer;
+		int number_integer = lexer.number_integer;
+		int number_float = lexer.number_float;
 		lexer.NextToken();
 
 		FunctionBaseAST *function = FindFunction(word);
@@ -148,7 +157,15 @@ void Parser::ParseBody(const std::string &end)
 			case Lexer::tok_integer:
 				// append literal integer
 				{
-					AST *ast = new IntegerAST(integer);
+					AST *ast = new IntegerAST(number_integer);
+					istack.Push(ast);
+					func_body->push_back(ast);
+				}
+				break;
+			case Lexer::tok_float:
+				// append literal float
+				{
+					AST *ast = new FloatAST(number_float);
 					istack.Push(ast);
 					func_body->push_back(ast);
 				}
