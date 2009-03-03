@@ -17,6 +17,8 @@ public:
 	FunctionBaseAST *FindFunction(const std::string &word);
 	void MainLoop();
 	void Compile(Module *module);
+	void Optimize(Module *module);
+	void Print();
 private:
 	AST *AppendCore(const std::string &word);
 	void ParseBody(const std::string &end);

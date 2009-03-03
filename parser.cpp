@@ -239,15 +239,9 @@ void Parser::MainLoop()
 		if(lexer.token == Lexer::tok_eof)
 			break;
 		else if(lexer.word == ":")
-		{
 			functions.push_back(ParseFunction());
-			functions.back()->Print();
-		}
 		else if(lexer.word == "extern")
-		{
 			functions.push_back(ParseExtern());
-			functions.back()->Print();
-		}
 		else
 			// TODO jit
 			throw std::string("not implemented");
@@ -260,7 +254,10 @@ void Parser::Compile(Module *module)
 {
 	for(Functions::iterator it = functions.begin(); it != functions.end(); it++)
 		(*it)->Compile(module);
+}
 
+void Parser::Optimize(Module *module)
+{
 	PassManager pm;
 	pm.add(new TargetData(module));
 	pm.add(createIPSCCPPass());
@@ -274,4 +271,11 @@ void Parser::Compile(Module *module)
 	pm.add(createCFGSimplificationPass());
 	pm.run(*module);
 }
+
+void Parser::Print()
+{
+	for(Functions::iterator it = functions.begin(); it != functions.end(); it++)
+		(*it)->Print();
+}
+
 
