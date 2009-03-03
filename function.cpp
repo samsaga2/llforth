@@ -4,23 +4,6 @@
 
 using namespace std;
 
-/// FunctionBaseAST
-const Type *FunctionBaseAST::ConvertType(TypeAST t)
-{
-	switch(t)
-	{
-		case TYPE_NULL:
-			throw string("not supported");
-
-		case TYPE_INT32:
-			return Type::Int32Ty;
-
-		case TYPE_STRING:
-			return PointerType::getUnqual(Type::Int8Ty);
-			//return ArrayType::get(Type::Int8Ty, 5);
-	}
-}
-
 /// FunctionAST
 FunctionAST::FunctionAST(const string &_name, BodyAST *_body, list<ArgAST *> *_args, list<OutputIndexAST *> *_outputs)
 	: name(_name), body(_body), args(_args), outputs(_outputs)
@@ -62,17 +45,6 @@ int FunctionAST::InputSize()
 int FunctionAST::OutputSize()
 {
 	return outputs->size();
-}
-
-void PrintType(TypeAST t)
-{
-	switch(t)
-	{
-		case TYPE_NULL: cout << " *"; break;
-		case TYPE_INT32: cout << " i"; break;
-		case TYPE_STRING: cout << " s"; break;
-		case TYPE_ANY: cout << " ?"; break;
-	}
 }
 
 void FunctionAST::Print()

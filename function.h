@@ -6,8 +6,6 @@
 
 class FunctionBaseAST
 {
-protected:
-	const Type *ConvertType(TypeAST t);
 public:
 	virtual const std::string Name() = 0;
 	virtual TypeAST InputType(int index) = 0;
