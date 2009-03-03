@@ -15,8 +15,9 @@
 
 using namespace llvm;
 
-Parser::Parser(Lexer *_lexer) : lexer(_lexer)
+Parser::Parser(std::istream &in) : lexer(in)
 {
+	lexer.NextToken();
 }
 
 FunctionBaseAST *Parser::FindFunction(const std::string &word)
@@ -92,11 +93,11 @@ AST *Parser::AppendCore(const std::string &word)
 	}
 	else if(word == "\"")
 	{
-		lexer->ReadUntil(34);
-		AST *ast = new StringAST(lexer->word);
+		lexer.ReadUntil(34);
+		AST *ast = new StringAST(lexer.word);
 		istack.Push(ast);
 		func_body->push_back(ast);
-		lexer->NextToken();
+		lexer.NextToken();
 	}
 	else if(word == "drop")
 	{
@@ -126,14 +127,14 @@ void Parser::ParseBody(const std::string &end)
 	istack.Clear();
 	do
 	{
-		if(lexer->word == end)
+		if(lexer.word == end)
 			break;
 
-		std::string word = lexer->word;
-		int token = lexer->token;
-		int number_integer = lexer->number_integer;
-		int number_float = lexer->number_float;
-		lexer->NextToken();
+		std::string word = lexer.word;
+		int token = lexer.token;
+		int number_integer = lexer.number_integer;
+		int number_float = lexer.number_float;
+		lexer.NextToken();
 
 		FunctionBaseAST *function = FindFunction(word);
 		if(function != NULL)
@@ -178,12 +179,12 @@ void Parser::ParseBody(const std::string &end)
 FunctionAST *Parser::ParseFunction()
 {
 	// parse :
-	assert(lexer->word == ":");
-	lexer->NextToken();
+	assert(lexer.word == ":");
+	lexer.NextToken();
 
 	// parse function name
-	std::string func_name = lexer->word;
-	lexer->NextToken();
+	std::string func_name = lexer.word;
+	lexer.NextToken();
 
 	// parse function body
 	func_body = new BodyAST();
@@ -215,41 +216,41 @@ TypeAST Parser::ConvertType(const std::string &type)
 ExternAST *Parser::ParseExtern()
 {
 	// parse extern
-	assert(lexer->word == "extern");
-	lexer->NextToken();
+	assert(lexer.word == "extern");
+	lexer.NextToken();
 
 	// parse function name
-	std::string func_name = lexer->word;
-	lexer->NextWord();
+	std::string func_name = lexer.word;
+	lexer.NextWord();
 
 	// parse (
-	assert(lexer->word == "(");
-	lexer->NextToken();
+	assert(lexer.word == "(");
+	lexer.NextToken();
 
 	// read inputs
 	std::vector<TypeAST> inputs;
-	while(lexer->word != "--")
+	while(lexer.word != "--")
 	{
-		TypeAST token = ConvertType(lexer->word);
+		TypeAST token = ConvertType(lexer.word);
 		inputs.push_back(token);
-		lexer->NextToken();
+		lexer.NextToken();
 	}
 
 	// parse --
-	assert(lexer->word == "--");
-	lexer->NextToken();
+	assert(lexer.word == "--");
+	lexer.NextToken();
 
 	// read outputs
 	std::vector<TypeAST> outputs;
-	while(lexer->word != ")")
+	while(lexer.word != ")")
 	{
-		TypeAST token = ConvertType(lexer->word);
+		TypeAST token = ConvertType(lexer.word);
 		outputs.push_back(token);
-		lexer->NextToken();
+		lexer.NextToken();
 	}
 
 	// parse )
-	assert(lexer->word == ")");
+	assert(lexer.word == ")");
 
 	return new ExternAST(func_name, inputs, outputs);
 }
@@ -258,19 +259,19 @@ void Parser::MainLoop()
 {
 	while(true)
 	{
-		if(lexer->word == ":")
+		if(lexer.word == ":")
 			functions.push_back(ParseFunction());
-		else if(lexer->word == "extern")
+		else if(lexer.word == "extern")
 			functions.push_back(ParseExtern());
 		else
 		{
 			// TODO jit
 			std::string error("jit not implemented: ");
-			error += lexer->word;
+			error += lexer.word;
 			throw error;
 		}
 
-		lexer->NextToken();
+		lexer.NextToken();
 	}
 }
 

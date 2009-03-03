@@ -57,32 +57,24 @@ void read_args(int argc, char **argv)
 
 void compile()
 {
+	Module module("llforth");
+
 	std::ifstream in(input_filename.c_str());
-
-	Lexer lexer(in);
-	Parser parser(&lexer);
-
+	Parser parser(in);
 	try
 	{
-		lexer.NextToken();
 		parser.MainLoop();
 	}
 	catch(EndOfStream &eof)
 	{
 	}
-
-	// create llvm module
-	Module module("llforth");
 	parser.Compile(&module);
 
 	if(optimize)
 		parser.Optimize(&module);
 
 	if(verbose)
-	{
-		parser.Print();
 		module.dump();
-	}
 
 	// save object file
 	std::ofstream of(output_filename.c_str(), std::ios::binary);
