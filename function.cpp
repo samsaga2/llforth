@@ -161,7 +161,7 @@ Function *FunctionAST::CompiledFunction()
 	return function;
 }
 
-// ExternAST
+/// ExternAST
 ExternAST::ExternAST(const std::string &_name, std::vector<TypeAST> _inputs, std::vector<TypeAST> _outputs)
 	: name(_name), inputs(_inputs), outputs(_outputs)
 {
