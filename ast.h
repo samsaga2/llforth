@@ -17,7 +17,8 @@ class AST
 {
 public:
 	AST();
-	Value *GetValue(int index, IRBuilder<> builder);
+	void Compile(IRBuilder<> builder);
+	Value *GetValue(int index);
 	virtual TypeAST InputType(int index) = 0;
 	virtual TypeAST OutputType(int index) = 0;
 	virtual int InputSize() = 0;
@@ -28,7 +29,7 @@ protected:
 	bool compiled;
 	std::vector<Value *> values;
 	void SetValue(int index, Value *value);
-	virtual void Compile(IRBuilder<> builder) = 0;
+	virtual void DoCompile(IRBuilder<> builder) = 0;
 };
 
 class IntegerAST : public AST
@@ -42,7 +43,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class StringAST : public AST
@@ -56,7 +57,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class BodyAST : public std::list<AST *>
@@ -131,7 +132,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class ArgAST : public AST
@@ -145,7 +146,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class OutputIndexAST : public AST
@@ -160,7 +161,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class DupAST : public AST
@@ -174,7 +175,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class MultAST : public AST
@@ -189,7 +190,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class AddAST : public AST
@@ -204,7 +205,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class SwapAST : public AST
@@ -219,7 +220,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class OverAST : public AST
@@ -234,7 +235,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class RotAST : public AST
@@ -250,7 +251,7 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 
 class DropAST : public AST
@@ -264,6 +265,6 @@ public:
 	int OutputSize();
 	void Print();
 protected:
-	void Compile(IRBuilder<> builder);
+	void DoCompile(IRBuilder<> builder);
 };
 

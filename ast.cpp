@@ -6,13 +6,19 @@ AST::AST() : compiled(false)
 {
 }
 
-Value *AST::GetValue(int index, IRBuilder<> builder)
+void AST::Compile(IRBuilder<> builder)
 {
 	if(!compiled)
 	{
-		Compile(builder);
+		DoCompile(builder);
 		compiled = true;
 	}
+	else
+		assert(false);	
+}
+
+Value *AST::GetValue(int index)
+{
 	return values[index];
 }
 
@@ -55,7 +61,7 @@ void IntegerAST::Print()
 	std::cout << integer;
 }
 
-void IntegerAST::Compile(IRBuilder<> builder)
+void IntegerAST::DoCompile(IRBuilder<> builder)
 {
 	SetValue(0, ConstantInt::get(APInt(32, integer)));
 }
@@ -92,7 +98,7 @@ void StringAST::Print()
 	std::cout << "\"" << str << "\"";
 }
 
-void StringAST::Compile(IRBuilder<> builder)
+void StringAST::DoCompile(IRBuilder<> builder)
 {
 	SetValue(0, builder.CreateGlobalStringPtr(str.c_str()));
 }
@@ -234,7 +240,7 @@ void FunctionAST::Print()
 	std::cout << std::endl << std::endl;
 }
 
-void FunctionAST::Compile(Module *module)
+void FunctionAST::DoCompile(Module *module)
 {
 	// function arguments types
 	std::vector<const Type *> args(OutputSize());
@@ -283,7 +289,10 @@ void FunctionAST::Compile(Module *module)
 	{
 		AST *ast = *it;
 		for(int i = 0; i < ast->OutputSize(); i++)
-			rets.push_back(ast->GetValue(i, builder));
+		{
+			ast->Compile(builder);
+			rets.push_back(ast->GetValue(i));
+		}
 	}
 
 	// create outputs
@@ -356,7 +365,7 @@ void ExternAST::Print()
 	std::cout << std::endl << std::endl;
 }
 
-void ExternAST::Compile(Module *module)
+void ExternAST::DoCompile(Module *module)
 {
 	// function arguments types
 	std::vector<const Type *> args(inputs.size());
@@ -432,7 +441,7 @@ void CallAST::Print()
 	std::cout << function->Name(); 
 }
 
-void CallAST::Compile(IRBuilder<> builder)
+void CallAST::DoCompile(IRBuilder<> builder)
 {
 	Function *compiled_function = function->CompiledFunction();
 	std::vector<Value *> func_args;
@@ -441,7 +450,8 @@ void CallAST::Compile(IRBuilder<> builder)
 		AST* arg = *it;
 		for(int i = 0; i < arg->OutputSize(); i++)
 		{
-			Value *value = arg->GetValue(i, builder);
+			arg->Compile(builder);
+			Value *value = arg->GetValue(i);
 			func_args.push_back(value);
 		}
 	}
@@ -492,7 +502,7 @@ void ArgAST::Print()
 	std::cout << "arg" << n;
 }
 
-void ArgAST::Compile(IRBuilder<> builder)
+void ArgAST::DoCompile(IRBuilder<> builder)
 {
 	BasicBlock *bb = builder.GetInsertBlock();
 	Function *f = bb->getParent();
@@ -541,9 +551,10 @@ void OutputIndexAST::Print()
 	}
 }
 
-void OutputIndexAST::Compile(IRBuilder<> builder)
+void OutputIndexAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, ast->GetValue(index, builder));
+	ast->Compile(builder);
+	SetValue(0, ast->GetValue(index));
 }
 
 /// DupAST
@@ -580,10 +591,11 @@ void DupAST::Print()
 	arg1->Print();
 }
 
-void DupAST::Compile(IRBuilder<> builder)
+void DupAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, arg1->GetValue(0, builder));
-	SetValue(1, arg1->GetValue(0, builder));
+	arg1->Compile(builder);
+	SetValue(0, arg1->GetValue(0));
+	SetValue(1, arg1->GetValue(0));
 }
 
 /// MultAST
@@ -622,9 +634,11 @@ void MultAST::Print()
 	std::cout << ")";
 }
 
-void MultAST::Compile(IRBuilder<> builder)
+void MultAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, builder.CreateMul(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
+	arg1->Compile(builder),
+	arg2->Compile(builder);
+	SetValue(0, builder.CreateMul(arg1->GetValue(0), arg2->GetValue(0)));
 }
 
 /// AddAST
@@ -663,9 +677,11 @@ void AddAST::Print()
 	std::cout << ")";
 }
 
-void AddAST::Compile(IRBuilder<> builder)
+void AddAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, builder.CreateAdd(arg1->GetValue(0, builder), arg2->GetValue(0, builder)));
+	arg1->Compile(builder);
+	arg2->Compile(builder);
+	SetValue(0, builder.CreateAdd(arg1->GetValue(0), arg2->GetValue(0)));
 }
 
 /// SwapAST
@@ -709,10 +725,12 @@ void SwapAST::Print()
 	arg1->Print();
 }
 
-void SwapAST::Compile(IRBuilder<> builder)
+void SwapAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, arg1->GetValue(0, builder));
-	SetValue(1, arg2->GetValue(0, builder));
+	arg1->Compile(builder),
+	arg2->Compile(builder);
+	SetValue(0, arg1->GetValue(0));
+	SetValue(1, arg2->GetValue(0));
 }
 
 // OverAST
@@ -757,11 +775,13 @@ void OverAST::Print()
 	arg1->Print();
 }
 
-void OverAST::Compile(IRBuilder<> builder)
+void OverAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, arg1->GetValue(0, builder));
-	SetValue(1, arg2->GetValue(0, builder));
-	SetValue(2, arg1->GetValue(0, builder));
+	arg1->Compile(builder);
+	arg2->Compile(builder);
+	SetValue(0, arg1->GetValue(0));
+	SetValue(1, arg2->GetValue(0));
+	SetValue(2, arg1->GetValue(0));
 }
 
 /// RotAST
@@ -811,11 +831,13 @@ void RotAST::Print()
 	arg1->Print();
 }
 
-void RotAST::Compile(IRBuilder<> builder)
+void RotAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, arg1->GetValue(0, builder));
-	SetValue(2, arg2->GetValue(0, builder));
-	SetValue(1, arg3->GetValue(0, builder));
+	arg1->Compile(builder);
+	arg2->Compile(builder);
+	SetValue(0, arg1->GetValue(0));
+	SetValue(2, arg2->GetValue(0));
+	SetValue(1, arg3->GetValue(0));
 }
 //
 /// DropAST
@@ -852,7 +874,8 @@ void DropAST::Print()
 	std::cout << " ]:*";
 }
 
-void DropAST::Compile(IRBuilder<> builder)
+void DropAST::DoCompile(IRBuilder<> builder)
 {
+	arg1->Compile(builder);
 }
 

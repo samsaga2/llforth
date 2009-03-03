@@ -1,7 +1,3 @@
-- Drop bug
-	extern puts ( s -- i )
-	: test puts " hello" drop ;
-
 - if:
 	do inlines and add branch words
 	: if ,branch >r ; inline
