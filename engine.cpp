@@ -55,7 +55,7 @@ AST *Engine::AppendCore(const std::string &word)
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
-	else if(word == "+.")
+	else if(word == "F+")
 	{
 		OutputIndexAST *arg2 = istack.Pop(TYPE_FLOAT);
 		OutputIndexAST *arg1 = istack.Pop(TYPE_FLOAT);
