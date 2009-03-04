@@ -1,6 +1,8 @@
+- Engine::runFunction get multiple return values
+
 - doubles, binary numbers, hex numbers
 
-- implement JIT into main loop
+- jit strings
 
 - inline
 
@@ -9,4 +11,6 @@
 - automatic i>s ?
 
 - namespaces ?
+
+- create function for core words: + * dup drop
 

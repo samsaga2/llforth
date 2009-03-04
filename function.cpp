@@ -8,6 +8,7 @@ using namespace std;
 FunctionAST::FunctionAST(const string &_name, BodyAST *_body, list<ArgAST *> *_args, list<OutputIndexAST *> *_outputs)
 	: name(_name), body(_body), args(_args), outputs(_outputs)
 {
+	function = NULL;
 }
 
 const string FunctionAST::Name()
@@ -71,6 +72,9 @@ void FunctionAST::Print()
 
 void FunctionAST::Compile(Module *module)
 {
+	if(function != NULL)
+		return;
+
 	// function arguments types
 	vector<const Type *> args(InputSize());
 	for(size_t i = 0; i < args.size(); i++)
@@ -144,6 +148,7 @@ Function *FunctionAST::CompiledFunction()
 ExternAST::ExternAST(const string &_name, vector<TypeAST> _inputs, vector<TypeAST> _outputs)
 	: name(_name), inputs(_inputs), outputs(_outputs)
 {
+	function = NULL;
 }
 
 const string ExternAST::Name()
@@ -190,6 +195,9 @@ void ExternAST::Print()
 
 void ExternAST::Compile(Module *module)
 {
+	if(function != NULL)
+		return;
+
 	// function arguments types
 	vector<const Type *> args(inputs.size());
 	for(size_t i = 0; i < inputs.size(); i++)

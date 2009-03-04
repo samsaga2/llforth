@@ -10,7 +10,7 @@
 #include <llvm/Target/TargetData.h>
 #include "lexer.h"
 #include "ast.h"
-#include "parser.h"
+#include "engine.h"
 
 using namespace llvm;
 
@@ -78,22 +78,12 @@ void do_optimize(Module *module)
 void compile(std::istream &in)
 {
 	Module module("llforth");
-	Parser parser(in);
 
-	try
-	{
-		parser.MainLoop();
-	}
-	catch(EndOfStream &eof)
-	{
-	}
-	parser.Compile(&module);
+	Engine engine(in, &module);
+	engine.Compile();
 
-	if(optimize)
-		do_optimize(&module);
-
-	if(verbose)
-		module.dump();
+	if(optimize) do_optimize(&module);
+	if(verbose)  module.dump();
 
 	// save object file
 	std::ofstream of(output_filename.c_str(), std::ios::binary);
