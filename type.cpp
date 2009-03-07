@@ -12,7 +12,6 @@ void PrintType(TypeAST t)
 		case TYPE_INT32: cout << " i"; break;
 		case TYPE_FLOAT: cout << " f"; break;
 		case TYPE_STRING: cout << " s"; break;
-		case TYPE_ANY: cout << " ?"; break;
 	}
 }
 
@@ -20,10 +19,6 @@ const Type *ConvertType(TypeAST t)
 {
 	switch(t)
 	{
-		case TYPE_ANY:
-			cerr << "Warning: TYPE_ANY changed to TYPE_INT32" << endl;
-			return ConvertType(TYPE_INT32);
-
 		case TYPE_NULL:
 			throw string("not supported");
 

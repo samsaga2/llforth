@@ -179,13 +179,13 @@ DupAST::DupAST(OutputIndexAST *_arg1) : arg1(_arg1)
 TypeAST DupAST::InputType(int index)
 {
 	assert(index == 0);
-	return arg1->OutputType();
+	return TYPE_INT32;
 }
 
 TypeAST DupAST::OutputType(int index)
 {
 	assert(index == 0 || index == 1);
-	return arg1->OutputType();
+	return TYPE_INT32;
 }
 
 int DupAST::InputSize()
@@ -333,20 +333,13 @@ SwapAST::SwapAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg2), ar
 TypeAST SwapAST::InputType(int index)
 {
 	assert(index == 0 || index == 1);
-	if(index == 0)
-		return arg1->OutputType();
-	else
-		return arg2->OutputType();
+	return TYPE_INT32;
 }
 
 TypeAST SwapAST::OutputType(int index)
 {
 	assert(index == 0 || index == 1);
-
-	if(index == 0)
-		return arg1->OutputType();
-	else
-		return arg2->OutputType();
+	return TYPE_INT32;
 }
 
 int SwapAST::InputSize()
@@ -380,19 +373,13 @@ OverAST::OverAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2) : arg1(_arg1), ar
 TypeAST OverAST::InputType(int index)
 {
 	assert(index == 0 || index == 1);
-	if(index == 0)
-		return arg1->OutputType();
-	else
-		return arg2->OutputType();
+	return TYPE_INT32;
 }
 
 TypeAST OverAST::OutputType(int index)
 {
 	assert(index >= 0 && index <= 2);
-	if(index == 0 || index == 2)
-		return arg1->OutputType();
-	else
-		return arg2->OutputType();
+	return TYPE_INT32;
 }
 
 int OverAST::InputSize()
@@ -426,23 +413,13 @@ RotAST::RotAST(OutputIndexAST *_arg1, OutputIndexAST *_arg2, OutputIndexAST *_ar
 TypeAST RotAST::InputType(int index)
 {
 	assert(index >= 0 && index <= 2);
-	if(index == 0)
-		return arg1->OutputType();
-	else if(index == 1)
-		return arg2->OutputType();
-	else
-		return arg3->OutputType();
+	return TYPE_INT32;
 }
 
 TypeAST RotAST::OutputType(int index)
 {
 	assert(index >= 0 && index <= 2);
-	if(index == 0)
-		return arg2->OutputType();
-	else if(index == 1)
-		return arg3->OutputType();
-	else
-		return arg1->OutputType();
+	return TYPE_INT32;
 }
 
 int RotAST::InputSize()
@@ -475,7 +452,7 @@ DropAST::DropAST(OutputIndexAST *_arg1) : arg1(_arg1)
 TypeAST DropAST::InputType(int index)
 {
 	assert(index == 0);
-	return TYPE_ANY;
+	return TYPE_INT32;
 }
 
 TypeAST DropAST::OutputType(int index)
