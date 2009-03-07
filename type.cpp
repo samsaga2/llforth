@@ -20,8 +20,11 @@ const Type *ConvertType(TypeAST t)
 {
 	switch(t)
 	{
-		case TYPE_NULL:
 		case TYPE_ANY:
+			cerr << "Warning: TYPE_ANY changed to TYPE_INT32" << endl;
+			return ConvertType(TYPE_INT32);
+
+		case TYPE_NULL:
 			throw string("not supported");
 
 		case TYPE_INT32:
