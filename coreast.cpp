@@ -88,7 +88,7 @@ TypeAST StringAST::InputType(int index)
 TypeAST StringAST::OutputType(int index)
 {
 	assert(index == 0);
-	return TYPE_STRING;
+	return TYPE_INT32;
 }
 
 int StringAST::InputSize()
@@ -108,7 +108,9 @@ void StringAST::Print()
 
 void StringAST::DoCompile(IRBuilder<> builder)
 {
-	SetValue(0, builder.CreateGlobalStringPtr(str.c_str()));
+	Value *string_ptr = builder.CreateGlobalStringPtr(str.c_str());
+	Value *int_ptr = builder.CreatePtrToInt(string_ptr, Type::Int32Ty);
+	SetValue(0, int_ptr);
 }
 
 /// CallAST
@@ -475,44 +477,5 @@ void DropAST::Print()
 void DropAST::DoCompile(IRBuilder<> builder)
 {
 	arg1->Compile(builder);
-}
-
-/// CastIntToStringAST
-CastIntToStringAST::CastIntToStringAST(OutputIndexAST *_arg1) : arg1(_arg1)
-{
-}
-
-TypeAST CastIntToStringAST::InputType(int index)
-{
-	assert(index == 0);
-	return TYPE_INT32;
-}
-
-TypeAST CastIntToStringAST::OutputType(int index)
-{
-	assert(index == 0);
-	return TYPE_STRING;
-}
-
-int CastIntToStringAST::InputSize()
-{
-	return 1;
-}
-
-int CastIntToStringAST::OutputSize()
-{
-	return 1;
-}
-
-void CastIntToStringAST::Print()
-{
-	cout << "i>s";
-}
-
-void CastIntToStringAST::DoCompile(IRBuilder<> builder)
-{
-	Value *value = arg1->GetValue(builder);
-	Type *string_type = PointerType::getUnqual(Type::Int8Ty);
-	SetValue(0, builder.CreateIntToPtr(value, string_type));
 }
 

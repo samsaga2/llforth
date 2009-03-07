@@ -103,13 +103,6 @@ AST *Engine::AppendCore(const std::string &word)
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
-	else if(word == "i>s")
-	{
-		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new CastIntToStringAST(arg1);
-		istack.Push(ast);
-		func_body->push_back(ast);
-	}
 	else
 	{
 		std::string error("unknown token `");
@@ -200,16 +193,6 @@ FunctionAST *Engine::ParseFunction()
 	return new FunctionAST(func_name, func_body, func_args, func_outs);
 }
 
-TypeAST Engine::ConvertType(const std::string &type)
-{
-	if(type == "i")
-		return TYPE_INT32;
-	else if(type == "s")
-		return TYPE_STRING;
-	else
-		throw std::string("not supported");
-}
-
 ExternAST *Engine::ParseExtern()
 {
 	// parse extern
@@ -228,7 +211,7 @@ ExternAST *Engine::ParseExtern()
 	std::vector<TypeAST> inputs;
 	while(lexer.word != "--")
 	{
-		TypeAST token = ConvertType(lexer.word);
+		TypeAST token = ConvertTypeAST(lexer.word);
 		inputs.push_back(token);
 		lexer.NextToken();
 	}
@@ -241,7 +224,7 @@ ExternAST *Engine::ParseExtern()
 	std::vector<TypeAST> outputs;
 	while(lexer.word != ")")
 	{
-		TypeAST token = ConvertType(lexer.word);
+		TypeAST token = ConvertTypeAST(lexer.word);
 		outputs.push_back(token);
 		lexer.NextToken();
 	}

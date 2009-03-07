@@ -10,7 +10,6 @@ void PrintType(TypeAST t)
 	{
 		case TYPE_INT32: cout << " i"; break;
 		case TYPE_FLOAT: cout << " f"; break;
-		case TYPE_STRING: cout << " s"; break;
 	}
 }
 
@@ -23,9 +22,21 @@ const Type *ConvertType(TypeAST t)
 
 		case TYPE_FLOAT:
 			return Type::FloatTy;
+	}
+}
 
-		case TYPE_STRING:
-			return PointerType::getUnqual(Type::Int8Ty);
+TypeAST ConvertTypeAST(const std::string &type)
+{
+	if(type == "i")
+		return TYPE_INT32;
+	else if(type == "f")
+		return TYPE_FLOAT;
+	else
+	{
+		std::string error = "unknown type `";
+		error += type;
+		error += "'";
+		throw error;
 	}
 }
 

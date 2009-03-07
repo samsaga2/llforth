@@ -32,6 +32,5 @@ private:
 	void ParseBody(const std::string &end);
 	FunctionAST *ParseFunction();
 	ExternAST *ParseExtern();
-	TypeAST ConvertType(const std::string &type);
 };
 
