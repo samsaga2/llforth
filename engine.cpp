@@ -105,7 +105,7 @@ AST *Engine::AppendCore(const std::string &word)
 	}
 	else if(word == "i>s")
 	{
-		OutputIndexAST *arg1 = istack.Pop(TYPE_ANY);
+		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
 		AST *ast = new CastIntToStringAST(arg1);
 		istack.Push(ast);
 		func_body->push_back(ast);
