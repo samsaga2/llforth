@@ -11,10 +11,181 @@
 
 using namespace llvm;
 
+class DupWord : public Word
+{
+public:
+	const char *Name() { return "dup"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+		engine->AppendBody(new DupAST(arg1));
+	}
+};
+
+class MultWord : public Word
+{
+	const char *Name() { return "*"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+		engine->AppendBody(new MultAST(arg1, arg2));
+	}
+};
+
+class AddWord : public Word
+{
+	const char *Name() { return "+"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+		engine->AppendBody(new AddIntegerAST(arg1, arg2));
+	}
+};
+
+class AddFloatWord : public Word
+{
+	const char *Name() { return "f+"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_FLOAT);
+		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_FLOAT);
+		engine->AppendBody(new AddFloatAST(arg1, arg2));
+	}
+};
+
+class SwapWord : public Word
+{
+	const char *Name() { return "swap"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+		engine->AppendBody(new SwapAST(arg1, arg2));
+	}
+};
+
+class OverWord : public Word
+{
+	const char *Name() { return "over"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+		engine->AppendBody(new OverAST(arg1, arg2));
+	}
+};
+
+class RotWord : public Word
+{
+	const char *Name() { return "rot"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		OutputIndexAST *arg3 = engine->IStack()->Pop(TYPE_INT32);
+		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+		engine->AppendBody(new RotAST(arg1, arg2, arg3));
+	}
+};
+
+class StringWord : public Word
+{
+	const char *Name() { return "s\""; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		engine->GetLexer()->ReadUntil(34);
+		engine->AppendBody(new StringAST(engine->GetLexer()->word));
+		engine->GetLexer()->NextToken();
+	}
+};
+
+class DropWord : public Word
+{
+	const char *Name() { return "drop"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 0)
+			throw std::string("not supported");
+
+		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+		engine->AppendBody(new DropAST(arg1));
+	}
+};
+
+class DoColonWord : public Word
+{
+public:
+	const char *Name() { return ":"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 1)
+			throw std::string("not supported");
+
+		engine->ParseFunction();
+	}
+};
+
+class ExternWord : public Word
+
+{
+public:
+	const char *Name() { return "extern"; }
+	void Execute(Engine *engine, int state)
+	{
+		if(state == 1)
+			throw std::string("not supported");
+
+		engine->ParseExtern();
+	}
+};
+
 Engine::Engine(std::istream &in, Module *_module) : lexer(in)
 {
 	module = _module;
 	jit = ExecutionEngine::create(module);
+
+	words.push_back(new DupWord());
+	words.push_back(new MultWord());
+	words.push_back(new AddWord());
+	words.push_back(new AddFloatWord());
+	words.push_back(new SwapWord());
+	words.push_back(new OverWord());
+	words.push_back(new RotWord());
+	words.push_back(new StringWord());
+	words.push_back(new DropWord());
+	words.push_back(new DoColonWord());
+	words.push_back(new ExternWord());
+}
+
+Engine::~Engine()
+{
+	for(std::list<Word *>::iterator it = words.begin(); it != words.end(); it++)
+		delete *it;
 }
 
 FunctionBaseAST *Engine::FindFunction(const std::string &word)
@@ -30,86 +201,20 @@ FunctionBaseAST *Engine::FindFunction(const std::string &word)
 	return NULL;
 }
 
-AST *Engine::AppendCore(const std::string &word)
+void Engine::AppendCore(const std::string &word, int state)
 {
-	if(word == "dup")
+	std::list<Word *>::reverse_iterator it = words.rbegin();
+	while(it != words.rend())
 	{
-		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new DupAST(arg1);
-		istack.Push(ast);
-		func_body->push_back(ast);
+		if(word == (*it)->Name())
+		{
+			(*it)->Execute(this, state);
+			return;
+		}
+		it++;
 	}
-	else if(word == "*")
-	{
-		OutputIndexAST *arg2 = istack.Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new MultAST(arg1, arg2);
-		istack.Push(ast);
-		func_body->push_back(ast);
-	}
-	else if(word == "+")
-	{
-		OutputIndexAST *arg2 = istack.Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new AddIntegerAST(arg1, arg2);
-		istack.Push(ast);
-		func_body->push_back(ast);
-	}
-	else if(word == "f+")
-	{
-		OutputIndexAST *arg2 = istack.Pop(TYPE_FLOAT);
-		OutputIndexAST *arg1 = istack.Pop(TYPE_FLOAT);
-		AST *ast = new AddFloatAST(arg1, arg2);
-		istack.Push(ast);
-		func_body->push_back(ast);
-	}
-	else if(word == "swap")
-	{
-		OutputIndexAST *arg2 = istack.Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new SwapAST(arg1, arg2);
-		istack.Push(ast);
-		func_body->push_back(ast);
-	}
-	else if(word == "over")
-	{
-		OutputIndexAST *arg2 = istack.Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new OverAST(arg1, arg2);
-		istack.Push(ast);
-		func_body->push_back(ast);
-	}
-	else if(word == "rot")
-	{
-		OutputIndexAST *arg3 = istack.Pop(TYPE_INT32);
-		OutputIndexAST *arg2 = istack.Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new RotAST(arg1, arg2, arg3);
-		istack.Push(ast);
-		func_body->push_back(ast);
-	}
-	else if(word == "s\"")
-	{
-		lexer.ReadUntil(34);
-		AST *ast = new StringAST(lexer.word);
-		istack.Push(ast);
-		func_body->push_back(ast);
-		lexer.NextToken();
-	}
-	else if(word == "drop")
-	{
-		OutputIndexAST *arg1 = istack.Pop(TYPE_INT32);
-		AST *ast = new DropAST(arg1);
-		istack.Push(ast);
-		func_body->push_back(ast);
-	}
-	else
-	{
-		std::string error("unknown token `");
-		error += word;
-		error += "'";
-		throw error;
-	}
+
+	throw UnknownToken();
 }
 
 void Engine::ParseBody(const std::string &end)
@@ -143,7 +248,7 @@ void Engine::ParseBody(const std::string &end)
 			{
 			case Lexer::tok_word:
 				// append core word
-				AppendCore(word);
+				AppendCore(word, 1);
 				break;
 			case Lexer::tok_integer:
 				// append literal integer
@@ -166,7 +271,7 @@ void Engine::ParseBody(const std::string &end)
 	while(true);
 }
 
-FunctionAST *Engine::ParseFunction()
+void Engine::ParseFunction()
 {
 	// parse :
 	assert(lexer.word == ":");
@@ -190,10 +295,12 @@ FunctionAST *Engine::ParseFunction()
 	for(OutputList::iterator it = istack.stack.begin(); it != istack.stack.end(); it++)
 		func_outs->push_back(*it);
 
-	return new FunctionAST(func_name, func_body, func_args, func_outs);
+	FunctionBaseAST *f = new FunctionAST(func_name, func_body, func_args, func_outs);
+	f->Compile(module);
+	functions.push_back(f);
 }
 
-ExternAST *Engine::ParseExtern()
+void Engine::ParseExtern()
 {
 	// parse extern
 	assert(lexer.word == "extern");
@@ -232,7 +339,9 @@ ExternAST *Engine::ParseExtern()
 	// parse )
 	assert(lexer.word == ")");
 
-	return new ExternAST(func_name, inputs, outputs);
+	FunctionBaseAST *f = new ExternAST(func_name, inputs, outputs);
+	f->Compile(module);
+	functions.push_back(f);
 }
 
 void Engine::Execute(FunctionBaseAST *function)
@@ -293,21 +402,14 @@ void Engine::Compile()
 		lexer.NextToken();
 		while(true)
 		{
-			if(lexer.word == ":")
+			try
 			{
-				FunctionBaseAST *f = ParseFunction();
-				f->Compile(module);
-				functions.push_back(f);
+				AppendCore(lexer.word, 0);
 			}
-			else if(lexer.word == "extern")
+			catch(UnknownToken &e)
 			{
-				FunctionBaseAST *f = ParseExtern();
-				f->Compile(module);
-				functions.push_back(f);
-			}
-			else
 				Execute(lexer.word);
-
+			}
 			lexer.NextToken();
 		}
 	}
@@ -339,5 +441,11 @@ void Engine::PrintJITStack()
 		}
 		std::cout << std::endl;
 	}
+}
+
+void Engine::AppendBody(AST *ast)
+{
+	istack.Push(ast);
+	func_body->push_back(ast);
 }
 
