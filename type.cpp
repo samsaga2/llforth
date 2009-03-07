@@ -21,6 +21,7 @@ const Type *ConvertType(TypeAST t)
 	switch(t)
 	{
 		case TYPE_NULL:
+		case TYPE_ANY:
 			throw string("not supported");
 
 		case TYPE_INT32:
