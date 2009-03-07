@@ -21,7 +21,7 @@ class Word
 {
 public:
 	virtual const char *Name() = 0;
-	virtual void Execute(Engine *engine, int state) = 0;
+	virtual void Execute(Engine *engine, Lexer *lexer, int state) = 0;
 };
 
 class Engine
@@ -48,7 +48,6 @@ public:
 	void Execute(FunctionBaseAST *function);
 	void PrintJITStack();
 	InferenceStack *IStack() { return &istack; }
-	Lexer *GetLexer() { return &lexer; }
 	void AppendBody(AST *ast);
 	void ParseFunction();
 	void ParseExtern();

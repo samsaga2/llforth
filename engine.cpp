@@ -11,158 +11,106 @@
 
 using namespace llvm;
 
-class DupWord : public Word
-{
-public:
-	const char *Name() { return "dup"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+#define WORD(name, word) \
+	class name : public Word { \
+		const char *Name() { return word; } \
+		void Execute(Engine *engine, Lexer *lexer, int state) {
 
-		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
-		engine->AppendBody(new DupAST(arg1));
-	}
-};
+#define END_WORD() } };
 
-class MultWord : public Word
-{
-	const char *Name() { return "*"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+WORD(DupWord, "dup")
+	if(state == 0)
+		throw std::string("not supported");
 
-		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
-		engine->AppendBody(new MultAST(arg1, arg2));
-	}
-};
+	OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+	engine->AppendBody(new DupAST(arg1));
+END_WORD()
 
-class AddWord : public Word
-{
-	const char *Name() { return "+"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+WORD(MultWord, "*")
+	if(state == 0)
+		throw std::string("not supported");
 
-		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
-		engine->AppendBody(new AddIntegerAST(arg1, arg2));
-	}
-};
+	OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+	OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+	engine->AppendBody(new MultAST(arg1, arg2));
+END_WORD()
 
-class AddFloatWord : public Word
-{
-	const char *Name() { return "f+"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+WORD(AddWord, "+")
+	if(state == 0)
+		throw std::string("not supported");
 
-		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_FLOAT);
-		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_FLOAT);
-		engine->AppendBody(new AddFloatAST(arg1, arg2));
-	}
-};
+	OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+	OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+	engine->AppendBody(new AddIntegerAST(arg1, arg2));
+END_WORD()
 
-class SwapWord : public Word
-{
-	const char *Name() { return "swap"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+WORD(AddFloatWord, "f+")
+	if(state == 0)
+		throw std::string("not supported");
 
-		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
-		engine->AppendBody(new SwapAST(arg1, arg2));
-	}
-};
+	OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_FLOAT);
+	OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_FLOAT);
+	engine->AppendBody(new AddFloatAST(arg1, arg2));
+END_WORD()
 
-class OverWord : public Word
-{
-	const char *Name() { return "over"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+WORD(SwapWord, "swap")
+	if(state == 0)
+		throw std::string("not supported");
 
-		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
-		engine->AppendBody(new OverAST(arg1, arg2));
-	}
-};
+	OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+	OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+	engine->AppendBody(new SwapAST(arg1, arg2));
+END_WORD()
 
-class RotWord : public Word
-{
-	const char *Name() { return "rot"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+WORD(OverWord, "over")
+	if(state == 0)
+		throw std::string("not supported");
 
-		OutputIndexAST *arg3 = engine->IStack()->Pop(TYPE_INT32);
-		OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
-		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
-		engine->AppendBody(new RotAST(arg1, arg2, arg3));
-	}
-};
+	OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+	OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+	engine->AppendBody(new OverAST(arg1, arg2));
+END_WORD()
 
-class StringWord : public Word
-{
-	const char *Name() { return "s\""; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+WORD(RotWord, "rot")
+	if(state == 0)
+		throw std::string("not supported");
 
-		engine->GetLexer()->ReadUntil(34);
-		engine->AppendBody(new StringAST(engine->GetLexer()->word));
-		engine->GetLexer()->NextToken();
-	}
-};
+	OutputIndexAST *arg3 = engine->IStack()->Pop(TYPE_INT32);
+	OutputIndexAST *arg2 = engine->IStack()->Pop(TYPE_INT32);
+	OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+	engine->AppendBody(new RotAST(arg1, arg2, arg3));
+END_WORD()
 
-class DropWord : public Word
-{
-	const char *Name() { return "drop"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 0)
-			throw std::string("not supported");
+WORD(StringWord, "s\"")
+	if(state == 0)
+		throw std::string("not supported");
 
-		OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
-		engine->AppendBody(new DropAST(arg1));
-	}
-};
+	lexer->ReadUntil(34);
+	engine->AppendBody(new StringAST(lexer->word));
+	lexer->NextToken();
+END_WORD()
 
-class DoColonWord : public Word
-{
-public:
-	const char *Name() { return ":"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 1)
-			throw std::string("not supported");
+WORD(DropWord, "drop")
+	if(state == 0)
+		throw std::string("not supported");
 
-		engine->ParseFunction();
-	}
-};
+	OutputIndexAST *arg1 = engine->IStack()->Pop(TYPE_INT32);
+	engine->AppendBody(new DropAST(arg1));
+END_WORD()
 
-class ExternWord : public Word
+WORD(DoColonWord, ":")
+	if(state == 1)
+		throw std::string("not supported");
 
-{
-public:
-	const char *Name() { return "extern"; }
-	void Execute(Engine *engine, int state)
-	{
-		if(state == 1)
-			throw std::string("not supported");
+	engine->ParseFunction();
+END_WORD()
 
-		engine->ParseExtern();
-	}
-};
+WORD(ExternWord, "extern")
+	if(state == 1)
+		throw std::string("not supported");
+
+	engine->ParseExtern();
+END_WORD()
 
 Engine::Engine(std::istream &in, Module *_module) : lexer(in)
 {
@@ -208,7 +156,7 @@ void Engine::AppendCore(const std::string &word, int state)
 	{
 		if(word == (*it)->Name())
 		{
-			(*it)->Execute(this, state);
+			(*it)->Execute(this, &lexer, state);
 			return;
 		}
 		it++;
