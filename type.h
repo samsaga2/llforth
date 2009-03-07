@@ -6,7 +6,6 @@ using namespace llvm;
 
 enum TypeAST
 {
-	TYPE_NULL,
 	TYPE_INT32,
 	TYPE_STRING,
 	TYPE_FLOAT

@@ -11,7 +11,6 @@ IntegerAST::IntegerAST(int _number) : number(_number)
 TypeAST IntegerAST::InputType(int index)
 {
 	assert(false);
-	return TYPE_NULL;
 }
 
 TypeAST IntegerAST::OutputType(int index)
@@ -48,7 +47,6 @@ FloatAST::FloatAST(float _number) : number(_number)
 TypeAST FloatAST::InputType(int index)
 {
 	assert(false);
-	return TYPE_NULL;
 }
 
 TypeAST FloatAST::OutputType(int index)
@@ -85,7 +83,6 @@ StringAST::StringAST(const string &_str) : str(_str)
 TypeAST StringAST::InputType(int index)
 {
 	assert(false);
-	return TYPE_NULL;
 }
 
 TypeAST StringAST::OutputType(int index)
@@ -458,7 +455,6 @@ TypeAST DropAST::InputType(int index)
 TypeAST DropAST::OutputType(int index)
 {
 	assert(false);
-	return TYPE_NULL;
 }
 
 int DropAST::InputSize()

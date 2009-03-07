@@ -88,7 +88,6 @@ ArgAST::ArgAST(int _n, TypeAST _type) : n(_n), type(_type)
 TypeAST ArgAST::InputType(int index)
 {
 	assert(false);
-	return TYPE_NULL;
 }
 
 TypeAST ArgAST::OutputType(int index)
