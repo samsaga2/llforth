@@ -55,7 +55,7 @@ AST *Engine::AppendCore(const std::string &word)
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
-	else if(word == "F+")
+	else if(word == "f+")
 	{
 		OutputIndexAST *arg2 = istack.Pop(TYPE_FLOAT);
 		OutputIndexAST *arg1 = istack.Pop(TYPE_FLOAT);
@@ -88,7 +88,7 @@ AST *Engine::AppendCore(const std::string &word)
 		istack.Push(ast);
 		func_body->push_back(ast);
 	}
-	else if(word == "\"")
+	else if(word == "s\"")
 	{
 		lexer.ReadUntil(34);
 		AST *ast = new StringAST(lexer.word);
