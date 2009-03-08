@@ -16,7 +16,7 @@ class Engine
 	Words words;
 	Word *latest;
 public:
-	std::list<int> stack;
+	std::list<int> runtime_stack;
 
 	Engine(std::istream &in);
 

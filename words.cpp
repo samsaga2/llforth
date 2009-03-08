@@ -76,7 +76,7 @@ void PrintStackWord::Execute(Engine* e, bool compiling)
 	if(compiling)
 		assert(false);
 
-	for(std::list<int>::reverse_iterator it = e->stack.rbegin(); it != e->stack.rend(); it++)
+	for(std::list<int>::reverse_iterator it = e->runtime_stack.rbegin(); it != e->runtime_stack.rend(); it++)
 		std::cout << "  " << *it;
 	std::cout << std::endl;
 }
@@ -91,9 +91,9 @@ void FunctionWord::Execute(Engine* e, bool compiling)
 	std::vector<llvm::GenericValue> arguments(inputs + outputs);
 	for(size_t i = 0; i < inputs; i++)
 	{
-		int number = e->stack.front();
+		int number = e->runtime_stack.front();
 		arguments[i].IntVal = llvm::APInt(32, number);
-		e->stack.pop_front();
+		e->runtime_stack.pop_front();
 	}
 
 	// setup outputs
@@ -105,7 +105,7 @@ void FunctionWord::Execute(Engine* e, bool compiling)
 
 	// push outs
 	for(size_t i = 0; i < outputs; i++)
-		e->stack.push_front(outs[i]);
+		e->runtime_stack.push_front(outs[i]);
 }
 
 void FunctionWord::Compile(Engine *e, WordInstance *instance)
@@ -140,7 +140,7 @@ void FunctionWord::Compile(Engine *e, WordInstance *instance)
 
 void LiteralWord::Execute(Engine* e, bool compiling)
 {
-	e->stack.push_front(number);
+	e->runtime_stack.push_front(number);
 }
 
 void LiteralWord::Compile(Engine* e, WordInstance *instance)
