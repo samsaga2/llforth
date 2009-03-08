@@ -44,24 +44,22 @@ void ColonWord::Execute(Engine* e, bool compiling)
 		WordInstance *instance = new WordInstance(word);
 		instance->Compile(e);
 
-		// setup outputs
-		for(size_t i = 0; i < instance->GetOutputSize(); i++)
-			e->stack.push_back(new WordIndex(instance, i));
+		e->Push(instance);
 	}
 
 	// print word info
 	if(e->GetVerbose())
-		std::cerr << "WORD: " << function_name << " ins:" << e->args.size() << " outs:" << e->stack.size() << std::endl;
+		std::cerr << "WORD: " << function_name << " ins:" << e->compiler_args.size() << " outs:" << e->compiler_stack.size() << std::endl;
 
 	// setup outputs
 	llvm::Function *latest = e->GetJIT()->GetLatest();
-	for(size_t i = 0; !e->stack.empty(); i++)
+	for(size_t i = 0; !e->compiler_stack.empty(); i++)
 	{
-		llvm::Value *input = e->stack.back()->GetOutput();
+		llvm::Value *input = e->compiler_stack.back()->GetOutput();
 		llvm::Value *output = e->GetJIT()->CreateOutputArgument();
 
 		e->GetJIT()->GetBuilder()->CreateStore(input, output);
-		e->stack.pop_back();
+		e->compiler_stack.pop_back();
 	}
 
 	e->GetJIT()->GetBuilder()->CreateRetVoid();

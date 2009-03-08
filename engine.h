@@ -17,8 +17,8 @@ class Engine
 	Word *latest;
 public:
 	std::list<int> runtime_stack;
-	std::list<WordIndex *> stack;
-	std::list<ArgumentWord *> args;
+	std::list<WordIndex *> compiler_stack;
+	std::list<ArgumentWord *> compiler_args;
 
 	Engine(std::istream &in);
 
@@ -36,6 +36,7 @@ public:
 
 	void CreateWord();
 	void FinishWord(const std::string& word);
+	void Push(WordInstance *instance);
 	WordIndex *Pop();
 };
 

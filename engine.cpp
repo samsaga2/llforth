@@ -121,8 +121,8 @@ void Engine::CreateWord()
 	jit.CreateWord();
 	latest = NULL;
 
-	stack.clear();
-	args.clear();
+	compiler_stack.clear();
+	compiler_args.clear();
 }
 
 void Engine::FinishWord(const std::string& word)
@@ -135,23 +135,30 @@ void Engine::FinishWord(const std::string& word)
 	words.push_back(latest);
 }
 
+void Engine::Push(WordInstance *instance)
+{
+	// setup outputs
+	for(size_t i = 0; i < instance->GetOutputSize(); i++)
+		compiler_stack.push_back(new WordIndex(instance, i));
+}
+
 WordIndex *Engine::Pop()
 {
 	WordIndex *value;
-	if(stack.size() == 0)
+	if(compiler_stack.size() == 0)
 	{
 		// drop value from function argument
-		ArgumentWord *arg = new ArgumentWord(args.size());
+		ArgumentWord *arg = new ArgumentWord(compiler_args.size());
 		WordInstance *arg_instance = new WordInstance(arg);
-		args.push_back(arg);
+		compiler_args.push_back(arg);
 		arg_instance->Compile(this);
 		value = new WordIndex(arg_instance, 0);
 	}
 	else
 	{
 		// drop value from stack
-		value = stack.back();
-		stack.pop_back();
+		value = compiler_stack.back();
+		compiler_stack.pop_back();
 	}
 
 	return value;
