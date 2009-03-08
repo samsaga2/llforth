@@ -1,9 +1,16 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
+#include <llvm/PassManager.h>
+#include <llvm/CodeGen/Passes.h>
+#include <llvm/LinkAllPasses.h>
+#include <llvm/Target/TargetData.h>
+#include <llvm/Bitcode/ReaderWriter.h>
+#include <llvm/PassManager.h>
+#include <llvm/CodeGen/Passes.h>
+#include <llvm/LinkAllPasses.h>
+#include <llvm/Target/TargetData.h>
 #include "engine.h"
-
-using namespace llvm;
 
 static bool verbose = false;
 static std::string input_filename("");
@@ -56,6 +63,35 @@ void compile(std::istream &in)
 	engine.SetOptimize(optimize);
 	engine.SetVerbose(verbose);
 	engine.MainLoop();
+
+	if(output_filename != "")
+	{
+		llvm::Module *module = engine.GetJIT()->GetModule();
+
+		if(optimize)
+		{
+			llvm::PassManager pm;
+			pm.add(new llvm::TargetData(module));
+			pm.add(llvm::createIPSCCPPass());
+			pm.add(llvm::createGlobalOptimizerPass());
+			pm.add(llvm::createInstructionCombiningPass());
+			pm.add(llvm::createFunctionInliningPass());
+			pm.add(llvm::createGlobalOptimizerPass());
+			pm.add(llvm::createInstructionCombiningPass());
+			pm.add(llvm::createGVNPass());
+			pm.add(llvm::createPromoteMemoryToRegisterPass());
+			pm.add(llvm::createCFGSimplificationPass());
+			pm.run(*module);
+		}
+
+		if(verbose)
+			module->dump();
+
+		// save object file
+		std::ofstream of(output_filename.c_str(), std::ios::binary);
+		llvm::WriteBitcodeToFile(module, of);
+		of.close();
+	}
 }
 
 int main(int argc, char **argv)
