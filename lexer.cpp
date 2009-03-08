@@ -1,87 +1,72 @@
 #include "lexer.h"
-#include <sstream>
-#include <assert.h>
 
-using namespace std;
-
-Lexer::Lexer(istream &_in) : in(_in)
+Lexer::Lexer(std::istream &_in) : in(_in)
 {
 }
 
-void Lexer::NextWord()
+std::string Lexer::NextWord()
 {
+	std::string word;
 	if(!(in >> word))
 		throw EndOfStream();
 
-	token = tok_word;
+	return word;
 }
 
-void Lexer::NextToken()
+std::string Lexer::NextToken()
 {
-	NextWord();
+	std::string word = NextWord();
 
 	if(word == "\\")
 	{
 		ReadLine();
-		NextToken();
+		return NextToken();
 	}
 	else if(word == "(")
-		Skip("(", ")");
-	else if(word == "(*")
-		Skip("(*", "*)");
-	else if(word.find('.') != string::npos)
 	{
-		// float?
-		istringstream iss(word);
-		if(iss >> number_float)
-			token = tok_float;
+		Skip(")");
+		return NextToken();
+	}
+	else if(word == "(*")
+	{
+		Skip("*)");
+		return NextToken();
 	}
 	else
-	{
-		// integer?
-		istringstream iss(word);
-		if(iss >> number_integer)
-			token = tok_integer;
-	}
+		return word;
 }
 
-void Lexer::ReadUntil(char u)
+std::string Lexer::ReadUntil(char u)
 {
-	token = tok_word;
-	if(word[word.size() - 1] == u)
-	{
-		word.resize(word.size() - 1);
-		return;
-	}
-
+	std::string word = "";
 	do
 	{
 		char c = in.get();
-		if(c == u) break;
+		if(c == u)
+			break;
 		word += c;
 	}
 	while(true);
+
+	return word;
 }
 
-void Lexer::ReadLine()
+std::string Lexer::ReadLine()
 {
-	if(!getline(in, word))
+	std::string line;
+	if(!std::getline(in, line))
 		throw EndOfStream();
 	else
-		token = tok_word;
+		return line;
 }
 
-void Lexer::Skip(const string &open, const string &close)
+void Lexer::Skip(const std::string &close)
 {
-	assert(word == open);
-	while(true)
+	std::string word;
+	do
 	{
-		NextToken();
-		if(word == close)
-		{
-			NextToken();
-			break;
-		}
+		word = NextToken();
 	}
+	while(word != close);
 }
 

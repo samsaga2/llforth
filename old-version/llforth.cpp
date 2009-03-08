@@ -1,6 +1,15 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <llvm/Module.h>
+#include <llvm/Bitcode/ReaderWriter.h>
 #include <unistd.h>
+#include <llvm/PassManager.h>
+#include <llvm/CodeGen/Passes.h>
+#include <llvm/LinkAllPasses.h>
+#include <llvm/Target/TargetData.h>
+#include "lexer.h"
+#include "ast.h"
 #include "engine.h"
 
 using namespace llvm;
@@ -46,16 +55,40 @@ void read_args(int argc, char **argv)
 			input_filename = optarg;
 			break;
 		case '?':
-			std::cerr << "Unknown option -" << (char)optopt << std::endl;
+			cerr << "Unknown option -" << (char)optopt << std::endl;
 		}
+}
+
+void do_optimize(Module *module)
+{
+	PassManager pm;
+	pm.add(new TargetData(module));
+	pm.add(createIPSCCPPass());
+	pm.add(createGlobalOptimizerPass());
+	pm.add(createInstructionCombiningPass());
+	pm.add(createFunctionInliningPass());
+	pm.add(createGlobalOptimizerPass());
+	pm.add(createInstructionCombiningPass());
+	pm.add(createGVNPass());
+	pm.add(createPromoteMemoryToRegisterPass());
+	pm.add(createCFGSimplificationPass());
+	pm.run(*module);
 }
 
 void compile(std::istream &in)
 {
-	Engine engine(in);
-	engine.SetOptimize(optimize);
-	engine.SetVerbose(verbose);
-	engine.MainLoop();
+	Module module("llforth");
+
+	Engine engine(in, &module);
+	engine.Compile();
+
+	if(optimize) do_optimize(&module);
+	if(verbose)  module.dump();
+
+	// save object file
+	std::ofstream of(output_filename.c_str(), std::ios::binary);
+	WriteBitcodeToFile(&module, of);
+	of.close();
 }
 
 int main(int argc, char **argv)

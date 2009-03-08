@@ -1,6 +1,6 @@
 #pragma once
 
-#include <istream>
+#include <iostream>
 
 class EndOfStream : std::exception
 {
@@ -12,27 +12,15 @@ class EndOfStream : std::exception
 
 class Lexer
 {
-public:
-	enum Token
-	{
-		tok_word,
-		tok_integer,
-		tok_float
-	};
-
 	std::istream &in;
-	int token;
-	std::string word;
-	int number_integer;
-	float number_float;
-
+public:
 	Lexer(std::istream &_in);
 
-	void NextWord();
-	void NextToken();
-	void ReadUntil(char u);
-	void ReadLine();
+	std::string NextWord();
+	std::string NextToken();
+	std::string ReadUntil(char u);
+	std::string ReadLine();
 private:
-	void Skip(const std::string &open, const std::string &close);
+	void Skip(const std::string &close);
 };
 
