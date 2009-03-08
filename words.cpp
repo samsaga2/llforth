@@ -174,3 +174,18 @@ void SeeWord::Execute(Engine* e, bool compiling)
 		function->dump();
 }
 
+void StringWord::Compile(Engine* e, WordInstance *instance)
+{
+	std::string string = e->GetLexer()->ReadUntil('"');
+
+	// set string size
+	llvm::Value *size = llvm::ConstantInt::get(llvm::APInt(32, string.size()));
+	instance->SetOutput(0, size);
+
+	// set string pointer
+	llvm::Constant *string_constant = llvm::ConstantArray::get(string.c_str(), true);
+	llvm::GlobalVariable *string_gv = new llvm::GlobalVariable(string_constant->getType(), true, llvm::GlobalValue::InternalLinkage, string_constant, "", e->GetJIT()->GetModule(), false);
+	llvm::Value *ptr_to_int = e->GetJIT()->GetBuilder()->CreatePtrToInt(string_gv, llvm::Type::Int32Ty);
+	instance->SetOutput(1, ptr_to_int);
+}
+

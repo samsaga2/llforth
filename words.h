@@ -75,3 +75,12 @@ public:
 	void Compile(Engine* e, WordInstance *instance) { assert(false); }
 };
 
+class StringWord : public Word
+{
+public:
+	std::string GetName() { return "s\""; }
+
+	void Execute(Engine* e, bool compiling) { assert(false); }
+	void Compile(Engine* e, WordInstance *instance);
+};
+
