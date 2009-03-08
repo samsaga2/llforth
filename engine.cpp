@@ -16,6 +16,7 @@ Engine::Engine(std::istream &in) : lexer(in)
 
 	WORD(ColonWord);
 	WORD(PrintStackWord);
+	WORD(InlineWord);
 
 	BWORD("+", 2, 1);
 		ARG(0);
@@ -123,6 +124,5 @@ void Engine::FinishWord()
 {
 	jit.FinishWord();
 	words.push_back(latest);
-	latest = NULL;
 }
 

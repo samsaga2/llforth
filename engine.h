@@ -25,6 +25,7 @@ public:
 
 	JIT *GetJIT() { return &jit; }
 	Lexer *GetLexer() { return &lexer; }
+	Word *GetLatest() { return latest; }
 
 	void MainLoop();
 	Word *FindWord(const std::string& word);

@@ -29,6 +29,7 @@ public:
 
 class Word
 {
+	bool inlined;
 public:
 	virtual std::string GetName() = 0;
 
@@ -37,6 +38,9 @@ public:
 
 	virtual size_t GetInputSize() = 0;
 	virtual size_t GetOutputSize() = 0;
+
+	bool IsInline() { return inlined; }
+	void SetInline(bool inlined) { this->inlined = inlined; }
 };
 
 class WordIndex

@@ -28,6 +28,12 @@ void ColonWord::Execute(Engine* e)
 			if(is >> number)
 				word = new LiteralWord(number);
 		}
+		else if(word->IsInline())
+		{
+			// inline
+			word->Execute(e);
+			continue;
+		}
 
 		assert(word != NULL);
 
@@ -167,5 +173,10 @@ void ArgumentWord::Compile(Engine* e, WordInstance *instance)
 {
 	llvm::Value *output = e->GetJIT()->GetArgument(number);
 	instance->SetOutput(0, output);
+}
+
+void InlineWord::Execute(Engine* e)
+{
+	e->GetLatest()->SetInline(true);
 }
 
