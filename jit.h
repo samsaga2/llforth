@@ -8,6 +8,7 @@
 #include <llvm/CodeGen/Passes.h>
 #include <llvm/LinkAllPasses.h>
 #include <llvm/Target/TargetData.h>
+#include <list>
 
 class JIT
 {
@@ -20,19 +21,24 @@ class JIT
 	llvm::Function *latest;
 	llvm::BasicBlock *latest_entry;
 	llvm::IRBuilder<> *builder;
+	std::list<llvm::Argument *> inp_args;
+	std::list<llvm::Argument *> out_args;
 public:
 	JIT();
 
 	void SetOptimize(bool optimize) { this->optimize = optimize; }
 
 	llvm::Module *GetModule() { return &module; }
-	llvm::Value *GetArgument(size_t index);
 	llvm::IRBuilder<> *GetBuilder() { return builder; }
 	llvm::Function *GetLatest() { return latest; }
 	llvm::ExecutionEngine *GetExecutionEngine() { return jit; }
 
-	void CreateWord(const std::string& word, size_t inputs, size_t outputs);
-	void FinishWord();
-	void AppendCall(llvm::Function *function);
+	void CreateWord();
+	void FinishWord(const std::string& word);
+
+	llvm::Value *CreateInputArgument();
+	llvm::Value *CreateOutputArgument();
+	size_t GetInputSize() { return inp_args.size(); }
+	size_t GetOutputSize() { return out_args.size(); }
 };
 

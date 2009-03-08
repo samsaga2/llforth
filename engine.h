@@ -22,6 +22,7 @@ public:
 
 	void SetOptimize(bool optimize) { jit.SetOptimize(optimize); }
 	void SetVerbose(bool verbose) { this->verbose = verbose; }
+	bool GetVerbose() { return verbose; }
 
 	JIT *GetJIT() { return &jit; }
 	Lexer *GetLexer() { return &lexer; }
@@ -31,7 +32,7 @@ public:
 	Word *FindWord(const std::string& word);
 	void ExecuteWord(const std::string& word);
 
-	void CreateWord(const std::string& word, size_t inputs, size_t outputs);
-	void FinishWord();
+	void CreateWord();
+	void FinishWord(const std::string& word);
 };
 

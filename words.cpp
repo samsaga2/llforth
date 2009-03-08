@@ -7,9 +7,11 @@
 void ColonWord::Execute(Engine* e)
 {
 	std::string function_name = e->GetLexer()->NextToken();
+	
+	// create function
+	e->CreateWord();
 
 	// read body
-	std::list<WordInstance *> body;
 	std::list<WordIndex *> stack;
 	std::list<ArgumentWord *> args;
 	while(true)
@@ -39,7 +41,6 @@ void ColonWord::Execute(Engine* e)
 
 		// create word instance
 		WordInstance *instance = new WordInstance(word);
-		body.push_back(instance);
 
 		// setup inputs
 		for(size_t i = 0; i < word->GetInputSize(); i++)
@@ -51,7 +52,7 @@ void ColonWord::Execute(Engine* e)
 				ArgumentWord *arg = new ArgumentWord(args.size());
 				WordInstance *arg_instance = new WordInstance(arg);
 				args.push_back(arg);
-				body.push_front(arg_instance);
+				arg_instance->Compile(e);
 				value = new WordIndex(arg_instance, 0);
 			}
 			else
@@ -63,38 +64,33 @@ void ColonWord::Execute(Engine* e)
 			instance->SetInput(i, value);
 		}
 
+		instance->Compile(e);
+
 		// setup outputs
 		for(size_t i = 0; i < word->GetOutputSize(); i++)
 			stack.push_back(new WordIndex(instance, i));
 	}
 
 	// print word info
-	std::cerr << "WORD: " << function_name << " ins:" << args.size() << " outs:" << stack.size() << " body:" << body.size() << std::endl;
-
-	// create function
-	e->CreateWord(function_name, args.size(), stack.size());
-	
-	// compile body
-	for(std::list<WordInstance *>::iterator it = body.begin(); it != body.end(); it++)
-	{
-		WordInstance *word_instance = *it;
-		word_instance->Compile(e);
-	}
+	if(e->GetVerbose())
+		std::cerr << "WORD: " << function_name << " ins:" << args.size() << " outs:" << stack.size() << std::endl;
 
 	// setup outputs
 	llvm::Function *latest = e->GetJIT()->GetLatest();
 	for(size_t i = 0; !stack.empty(); i++)
 	{
 		llvm::Value *input = stack.back()->GetOutput();
-		llvm::Value *output = e->GetJIT()->GetArgument(i + args.size());
+		llvm::Value *output = e->GetJIT()->CreateOutputArgument();
 
 		e->GetJIT()->GetBuilder()->CreateStore(input, output);
 		stack.pop_back();
 	}
 
 	e->GetJIT()->GetBuilder()->CreateRetVoid();
-	e->FinishWord();
-	latest->dump();
+	e->FinishWord(function_name);
+
+	if(e->GetVerbose())
+		e->GetJIT()->GetLatest()->dump();
 }
 
 void PrintStackWord::Execute(Engine* e)
@@ -171,7 +167,7 @@ void LiteralWord::Compile(Engine* e, WordInstance *instance)
 
 void ArgumentWord::Compile(Engine* e, WordInstance *instance)
 {
-	llvm::Value *output = e->GetJIT()->GetArgument(number);
+	llvm::Value *output = e->GetJIT()->CreateInputArgument();
 	instance->SetOutput(0, output);
 }
 

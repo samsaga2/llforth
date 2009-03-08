@@ -3,11 +3,11 @@
 #include <sstream>
 
 #define WORD(name) words.push_back(new name())
-#define BWORD(name, inputs, outputs) CreateWord(name, inputs, outputs); { int _inputs = inputs
+#define BWORD(name) CreateWord(); { std::string _name = name
 #define JIT jit.GetBuilder()
-#define ARG(number) llvm::Value *arg##number = jit.GetArgument(number)
-#define OUT(number, val) JIT->CreateStore(val, jit.GetArgument(_inputs + number))
-#define EWORD() JIT->CreateRetVoid(); } FinishWord()
+#define ARG(number) llvm::Value *arg##number = jit.CreateInputArgument()
+#define OUT(number, val) JIT->CreateStore(val, jit.CreateOutputArgument())
+#define EWORD() JIT->CreateRetVoid(); FinishWord(_name); }
 
 Engine::Engine(std::istream &in) : lexer(in)
 {
@@ -19,41 +19,42 @@ Engine::Engine(std::istream &in) : lexer(in)
 	WORD(InlineWord);
 	WORD(SeeWord);
 
-	BWORD("+", 2, 1);
+	BWORD("+");
 		ARG(0);
 		ARG(1);
 		OUT(0, JIT->CreateAdd(arg0, arg1));
 	EWORD();
-	BWORD("-", 2, 1);
+	BWORD("-");
 		ARG(0);
 		ARG(1);
 		OUT(0, JIT->CreateSub(arg0, arg1));
 	EWORD();
-	BWORD("*", 2, 1);
+	BWORD("*");
 		ARG(0);
 		ARG(1);
 		OUT(0, JIT->CreateMul(arg0, arg1));
 	EWORD();
-	BWORD("/", 2, 1);
+	BWORD("/");
 		ARG(0);
 		ARG(1);
 		OUT(0, JIT->CreateSDiv(arg0, arg1));
 	EWORD();
-	BWORD("drop", 1, 0);
+	BWORD("drop");
+		ARG(0);
 	EWORD();
-	BWORD("dup", 1, 2);
+	BWORD("dup");
 		ARG(0);
 		OUT(0, arg0);
 		OUT(1, arg0);
 	EWORD();
-	BWORD("over", 2, 3);
+	BWORD("over");
 		ARG(0);
 		ARG(1);
 		OUT(0, arg1);
 		OUT(1, arg0);
 		OUT(2, arg1);
 	EWORD();
-	BWORD("rot", 3, 3);
+	BWORD("rot");
 		ARG(0);
 		ARG(1);
 		ARG(2);
@@ -61,7 +62,7 @@ Engine::Engine(std::istream &in) : lexer(in)
 		OUT(1, arg0);
 		OUT(2, arg2);
 	EWORD();
-	BWORD("swap", 2, 2);
+	BWORD("swap");
 		ARG(0);
 		ARG(1);
 		OUT(0, arg0);
@@ -115,15 +116,19 @@ void Engine::ExecuteWord(const std::string &word)
 	throw std::string("unknown word");
 }
 
-void Engine::CreateWord(const std::string& word, size_t inputs, size_t outputs)
+void Engine::CreateWord()
 {
-	jit.CreateWord(word, inputs, outputs);
-	latest = new FunctionWord(jit.GetLatest(), inputs, outputs);
+	jit.CreateWord();
+	latest = NULL;
 }
 
-void Engine::FinishWord()
+void Engine::FinishWord(const std::string& word)
 {
-	jit.FinishWord();
+	size_t inputs = jit.GetInputSize();
+	size_t outputs = jit.GetOutputSize();
+	jit.FinishWord(word);
+
+	latest = new FunctionWord(jit.GetLatest(), inputs, outputs);
 	words.push_back(latest);
 }
 
