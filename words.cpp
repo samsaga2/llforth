@@ -4,8 +4,11 @@
 #include <iostream>
 #include <llvm/ExecutionEngine/GenericValue.h>
 
-void ColonWord::Execute(Engine* e)
+void ColonWord::Execute(Engine* e, bool compiling)
 {
+	if(compiling)
+		assert(false);
+
 	std::string function_name = e->GetLexer()->NextToken();
 	
 	// create function
@@ -33,7 +36,7 @@ void ColonWord::Execute(Engine* e)
 		else if(word->IsInline())
 		{
 			// inline
-			word->Execute(e);
+			word->Execute(e, true);
 			continue;
 		}
 
@@ -93,8 +96,11 @@ void ColonWord::Execute(Engine* e)
 		e->GetJIT()->GetLatest()->dump();
 }
 
-void PrintStackWord::Execute(Engine* e)
+void PrintStackWord::Execute(Engine* e, bool compiling)
 {
+	if(compiling)
+		assert(false);
+
 	for(std::list<int>::reverse_iterator it = e->stack.rbegin(); it != e->stack.rend(); it++)
 		std::cout << "  " << *it;
 	std::cout << std::endl;
@@ -104,7 +110,7 @@ FunctionWord::FunctionWord(llvm::Function *_function, size_t _inputs, size_t _ou
 {
 }
 
-void FunctionWord::Execute(Engine* e)
+void FunctionWord::Execute(Engine* e, bool compiling)
 {
 	// setup inputs
 	std::vector<llvm::GenericValue> arguments(inputs + outputs);
@@ -154,7 +160,7 @@ void FunctionWord::Compile(Engine *e, WordInstance *instance)
 	}
 }
 
-void LiteralWord::Execute(Engine* e)
+void LiteralWord::Execute(Engine* e, bool compiling)
 {
 	e->stack.push_front(number);
 }
@@ -171,13 +177,21 @@ void ArgumentWord::Compile(Engine* e, WordInstance *instance)
 	instance->SetOutput(0, output);
 }
 
-void InlineWord::Execute(Engine* e)
+void InlineWord::Execute(Engine* e, bool compiling)
 {
 	e->GetLatest()->SetInline(true);
 }
 
-void SeeWord::Execute(Engine* e)
+void InlineWord::Compile(Engine* e, WordInstance *instance)
 {
+	e->GetLatest()->SetInline(true);
+}
+
+void SeeWord::Execute(Engine* e, bool compiling)
+{
+	if(compiling)
+		assert(false);
+
 	std::string word = e->GetLexer()->NextWord();
 	llvm::Function *function = e->GetJIT()->GetModule()->getFunction(word);
 	if(function != NULL)

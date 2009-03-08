@@ -8,7 +8,7 @@ public:
 	std::string GetName() { return ":"; }
 	size_t GetInputSize() { return 0; }
 	size_t GetOutputSize() { return 0; }
-	void Execute(Engine* e);
+	void Execute(Engine* e, bool compiling);
 	void Compile(Engine* e, WordInstance *instance) { throw std::string("not supported"); }
 };
 
@@ -18,7 +18,7 @@ public:
 	std::string GetName() { return ".s"; }
 	size_t GetInputSize() { return 0; }
 	size_t GetOutputSize() { return 0; }
-	void Execute(Engine* e);
+	void Execute(Engine* e, bool compiling);
 	void Compile(Engine* e, WordInstance *instance) { throw std::string("not supported"); }
 };
 
@@ -35,7 +35,7 @@ public:
 	size_t GetInputSize() { return inputs; }
 	size_t GetOutputSize() { return outputs; }
 
-	void Execute(Engine* e);
+	void Execute(Engine* e, bool compiling);
 	void Compile(Engine *e, WordInstance *instance);
 };
 
@@ -49,7 +49,7 @@ public:
 	size_t GetInputSize() { return 0; }
 	size_t GetOutputSize() { return 1; }
 
-	void Execute(Engine* e);
+	void Execute(Engine* e, bool compiling);
 	void Compile(Engine* e, WordInstance *instance);
 };
 
@@ -63,7 +63,7 @@ public:
 	size_t GetInputSize() { return 0; }
 	size_t GetOutputSize() { return 1; }
 
-	void Execute(Engine* e) { assert(false); }
+	void Execute(Engine* e, bool compiling) { assert(false); }
 	void Compile(Engine* e, WordInstance *instance);
 };
 
@@ -74,8 +74,8 @@ public:
 	size_t GetInputSize() { return 0; }
 	size_t GetOutputSize() { return 0; }
 
-	void Execute(Engine* e);
-	void Compile(Engine* e, WordInstance *instance) { Execute(e); }
+	void Execute(Engine* e, bool compiling);
+	void Compile(Engine* e, WordInstance *instance);
 };
 
 class SeeWord : public Word
@@ -85,7 +85,7 @@ public:
 	size_t GetInputSize() { return 0; }
 	size_t GetOutputSize() { return 0; }
 
-	void Execute(Engine* e);
+	void Execute(Engine* e, bool compiling);
 	void Compile(Engine* e, WordInstance *instance) { assert(false); }
 };
 

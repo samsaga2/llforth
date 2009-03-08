@@ -35,7 +35,7 @@ public:
 
 	virtual std::string GetName() = 0;
 
-	virtual void Execute(Engine* e) = 0;
+	virtual void Execute(Engine* e, bool compiling) = 0;
 	virtual void Compile(Engine *e, WordInstance *instance) = 0;
 
 	virtual size_t GetInputSize() = 0;

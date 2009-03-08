@@ -99,7 +99,7 @@ void Engine::ExecuteWord(const std::string &word)
 	Word *w = FindWord(word);
 	if(w != NULL)
 	{
-		w->Execute(this);
+		w->Execute(this, false);
 		return;
 	}
 
@@ -109,7 +109,7 @@ void Engine::ExecuteWord(const std::string &word)
 	if(is >> number)
 	{
 		LiteralWord lit(number);
-		lit.Execute(this);
+		lit.Execute(this, false);
 		return;
 	}
 
