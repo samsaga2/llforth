@@ -78,3 +78,14 @@ public:
 	void Compile(Engine* e, WordInstance *instance) { Execute(e); }
 };
 
+class SeeWord : public Word
+{
+public:
+	std::string GetName() { return "see"; }
+	size_t GetInputSize() { return 0; }
+	size_t GetOutputSize() { return 0; }
+
+	void Execute(Engine* e);
+	void Compile(Engine* e, WordInstance *instance) { assert(false); }
+};
+

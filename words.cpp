@@ -180,3 +180,11 @@ void InlineWord::Execute(Engine* e)
 	e->GetLatest()->SetInline(true);
 }
 
+void SeeWord::Execute(Engine* e)
+{
+	std::string word = e->GetLexer()->NextWord();
+	llvm::Function *function = e->GetJIT()->GetModule()->getFunction(word);
+	if(function != NULL)
+		function->dump();
+}
+

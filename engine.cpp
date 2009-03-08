@@ -17,6 +17,7 @@ Engine::Engine(std::istream &in) : lexer(in)
 	WORD(ColonWord);
 	WORD(PrintStackWord);
 	WORD(InlineWord);
+	WORD(SeeWord);
 
 	BWORD("+", 2, 1);
 		ARG(0);
