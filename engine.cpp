@@ -120,6 +120,9 @@ void Engine::CreateWord()
 {
 	jit.CreateWord();
 	latest = NULL;
+
+	stack.clear();
+	args.clear();
 }
 
 void Engine::FinishWord(const std::string& word)
@@ -135,20 +138,20 @@ void Engine::FinishWord(const std::string& word)
 WordIndex *Engine::Pop()
 {
 	WordIndex *value;
-	if(jit.stack.size() == 0)
+	if(stack.size() == 0)
 	{
 		// drop value from function argument
-		ArgumentWord *arg = new ArgumentWord(jit.args.size());
+		ArgumentWord *arg = new ArgumentWord(args.size());
 		WordInstance *arg_instance = new WordInstance(arg);
-		jit.args.push_back(arg);
+		args.push_back(arg);
 		arg_instance->Compile(this);
 		value = new WordIndex(arg_instance, 0);
 	}
 	else
 	{
 		// drop value from stack
-		value = jit.stack.back();
-		jit.stack.pop_back();
+		value = stack.back();
+		stack.pop_back();
 	}
 
 	return value;

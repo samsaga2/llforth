@@ -38,9 +38,6 @@ void JIT::CreateWord()
 	// create entry
 	latest_entry = llvm::BasicBlock::Create("entry");
 	builder = new llvm::IRBuilder<>(latest_entry);
-
-	stack.clear();
-	args.clear();
 }
 
 void JIT::FinishWord(const std::string& word)
