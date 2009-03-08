@@ -31,6 +31,8 @@ class Word
 {
 	bool inlined;
 public:
+	Word() : inlined(false) { }
+
 	virtual std::string GetName() = 0;
 
 	virtual void Execute(Engine* e) = 0;
