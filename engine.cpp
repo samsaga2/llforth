@@ -132,3 +132,25 @@ void Engine::FinishWord(const std::string& word)
 	words.push_back(latest);
 }
 
+WordIndex *Engine::Pop()
+{
+	WordIndex *value;
+	if(jit.stack.size() == 0)
+	{
+		// drop value from function argument
+		ArgumentWord *arg = new ArgumentWord(jit.args.size());
+		WordInstance *arg_instance = new WordInstance(arg);
+		jit.args.push_back(arg);
+		arg_instance->Compile(this);
+		value = new WordIndex(arg_instance, 0);
+	}
+	else
+	{
+		// drop value from stack
+		value = jit.stack.back();
+		jit.stack.pop_back();
+	}
+
+	return value;
+}
+

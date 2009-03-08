@@ -34,5 +34,6 @@ public:
 
 	void CreateWord();
 	void FinishWord(const std::string& word);
+	WordIndex *Pop();
 };
 

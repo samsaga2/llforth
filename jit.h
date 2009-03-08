@@ -9,6 +9,7 @@
 #include <llvm/LinkAllPasses.h>
 #include <llvm/Target/TargetData.h>
 #include <list>
+#include "words.h"
 
 class JIT
 {
@@ -24,6 +25,9 @@ class JIT
 	std::list<llvm::Argument *> inp_args;
 	std::list<llvm::Argument *> out_args;
 public:
+	std::list<WordIndex *> stack;
+	std::list<ArgumentWord *> args;
+
 	JIT();
 
 	void SetOptimize(bool optimize) { this->optimize = optimize; }

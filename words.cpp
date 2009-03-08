@@ -15,8 +15,6 @@ void ColonWord::Execute(Engine* e, bool compiling)
 	e->CreateWord();
 
 	// read body
-	std::list<WordIndex *> stack;
-	std::list<ArgumentWord *> args;
 	while(true)
 	{
 		std::string token = e->GetLexer()->NextToken();
@@ -44,49 +42,26 @@ void ColonWord::Execute(Engine* e, bool compiling)
 
 		// create word instance
 		WordInstance *instance = new WordInstance(word);
-
-		// setup inputs
-		for(size_t i = 0; i < word->GetInputSize(); i++)
-		{
-			WordIndex *value;
-			if(stack.size() == 0)
-			{
-				// drop value from function argument
-				ArgumentWord *arg = new ArgumentWord(args.size());
-				WordInstance *arg_instance = new WordInstance(arg);
-				args.push_back(arg);
-				arg_instance->Compile(e);
-				value = new WordIndex(arg_instance, 0);
-			}
-			else
-			{
-				// drop value from stack
-				value = stack.back();
-				stack.pop_back();
-			}
-			instance->SetInput(i, value);
-		}
-
 		instance->Compile(e);
 
 		// setup outputs
-		for(size_t i = 0; i < word->GetOutputSize(); i++)
-			stack.push_back(new WordIndex(instance, i));
+		for(size_t i = 0; i < instance->GetOutputSize(); i++)
+			e->GetJIT()->stack.push_back(new WordIndex(instance, i));
 	}
 
 	// print word info
 	if(e->GetVerbose())
-		std::cerr << "WORD: " << function_name << " ins:" << args.size() << " outs:" << stack.size() << std::endl;
+		std::cerr << "WORD: " << function_name << " ins:" << e->GetJIT()->args.size() << " outs:" << e->GetJIT()->stack.size() << std::endl;
 
 	// setup outputs
 	llvm::Function *latest = e->GetJIT()->GetLatest();
-	for(size_t i = 0; !stack.empty(); i++)
+	for(size_t i = 0; !e->GetJIT()->stack.empty(); i++)
 	{
-		llvm::Value *input = stack.back()->GetOutput();
+		llvm::Value *input = e->GetJIT()->stack.back()->GetOutput();
 		llvm::Value *output = e->GetJIT()->CreateOutputArgument();
 
 		e->GetJIT()->GetBuilder()->CreateStore(input, output);
-		stack.pop_back();
+		e->GetJIT()->stack.pop_back();
 	}
 
 	e->GetJIT()->GetBuilder()->CreateRetVoid();
@@ -138,7 +113,10 @@ void FunctionWord::Compile(Engine *e, WordInstance *instance)
 	// setup inputs
 	std::vector<llvm::Value *> arguments(inputs + outputs);
 	for(size_t i = 0; i < inputs; i++)
-		arguments[i] = instance->GetInput(i)->GetOutput();
+	{
+		WordIndex *input = e->Pop();
+		arguments[i] = input->GetOutput();
+	}
 
 	// setup outputs
 	for(size_t i = 0; i < outputs; i++)

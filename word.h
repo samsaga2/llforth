@@ -11,18 +11,16 @@ class Word;
 class WordInstance
 {
 	Word *word;
-	std::vector<WordIndex *> inputs;
-	llvm::Value **outputs;
+	std::vector<llvm::Value *> outputs;
 public:
 	WordInstance(Word *_word);
 	~WordInstance();
 
 	Word *GetWord();
 	
-	void SetInput(size_t index, WordIndex *word_index);
-	WordIndex *GetInput(size_t index);
 	void SetOutput(size_t index, llvm::Value *output);
 	llvm::Value *GetOutput(size_t index);
+	size_t GetOutputSize() { return outputs.size(); }
 
 	void Compile(Engine *e);
 };
@@ -37,9 +35,6 @@ public:
 
 	virtual void Execute(Engine* e, bool compiling) = 0;
 	virtual void Compile(Engine *e, WordInstance *instance) = 0;
-
-	virtual size_t GetInputSize() = 0;
-	virtual size_t GetOutputSize() = 0;
 
 	bool IsInline() { return inlined; }
 	void SetInline(bool inlined) { this->inlined = inlined; }
