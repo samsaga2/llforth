@@ -53,9 +53,9 @@ void word_extern()
 		JIT::GetSingleton().GetLatest()->dump();
 }
 
-void word_inline()
+void word_immediate()
 {
-	Engine::GetSingleton().GetLatest()->SetInline(true);
+	Engine::GetSingleton().GetLatest()->SetImmediate(true);
 }
 
 void word_colon()
@@ -83,7 +83,7 @@ void word_colon()
 			if(is >> number)
 				word = new LiteralWord(number);
 		}
-		else if(word->IsInline())
+		else if(word->IsImmediate())
 		{
 			// inline
 			word->Execute(NULL);

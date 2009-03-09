@@ -20,7 +20,7 @@ Engine::Engine()
 #define IWORD(name, func, inputs, outputs) \
 	JIT::GetSingleton().AddInternalSymbol(name, (void *)&func); \
 	CreateExternWord(name, inputs, outputs);
-#define INLINE() latest->SetInline(true)
+#define IMMEDIATE() latest->SetImmediate(true)
 
 	#include "words_declare.inc"
 

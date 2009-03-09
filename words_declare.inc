@@ -1,7 +1,7 @@
 IWORD(".s", word_dots, 0, 0);
 IWORD("see", word_see, 0, 0);
 IWORD("extern", word_extern, 0, 0);
-IWORD("inline", word_inline, 0, 0); INLINE();
+IWORD("immediate", word_immediate, 0, 0); IMMEDIATE();
 IWORD(":", word_colon, 0, 0);
 WORD(StringWord);
 

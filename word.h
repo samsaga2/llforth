@@ -27,15 +27,15 @@ public:
 
 class Word
 {
-	bool inlined;
+	bool immediate;
 	bool hidden;
 public:
-	Word() : inlined(false), hidden(false) { }
+	Word() : immediate(false), hidden(false) { }
 
 	virtual std::string GetName() = 0;
-	bool IsInline() { return inlined; }
+	bool IsImmediate() { return immediate; }
 	bool IsHidden() { return hidden; }
-	void SetInline(bool inlined) { this->inlined = inlined; }
+	void SetImmediate(bool immediate) { this->immediate = immediate; }
 	void SetHidden(bool hidden) { this->hidden = hidden; }
 
 	virtual void Execute(WordInstance *instance) = 0;
