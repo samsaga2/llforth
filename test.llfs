@@ -1,5 +1,12 @@
 extern puts ( i -- i )
-: type ( addr len -- ) drop puts ;
+extern putchar ( i -- i )
+
+: 2drop ( x1 x2 -- ) drop drop ;
+: 2dup ( x1 x2 -- x1 x2 x1 x2 ) over over ;
+: emit ( char -- ) putchar drop ;
+: bl 32 emit ;
+: cr 10 emit ;
+: type ( c-addr u -- ) drop puts ;
 
 : hello-world s" Hello world!" ;
 : main hello-world type ;

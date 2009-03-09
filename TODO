@@ -3,4 +3,6 @@
 - base
 - add words: if then end do loop while repeat variable @ ! ...
 - incremental compiler
+- fix bug 2over
+- fix bug emit
 
