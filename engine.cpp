@@ -81,7 +81,7 @@ void Engine::ExecuteWord(const std::string &word)
 	Word *w = FindWord(word);
 	if(w != NULL)
 	{
-		w->Execute(this, false);
+		w->Execute(false);
 		return;
 	}
 
@@ -91,7 +91,7 @@ void Engine::ExecuteWord(const std::string &word)
 	if(is >> number)
 	{
 		LiteralWord lit(number);
-		lit.Execute(this, false);
+		lit.Execute(false);
 		return;
 	}
 
@@ -147,7 +147,7 @@ WordIndex *Engine::Pop()
 		ArgumentWord *arg = new ArgumentWord(compiler_args.size());
 		WordInstance *arg_instance = new WordInstance(arg);
 		compiler_args.push_back(arg);
-		arg_instance->Compile(this);
+		arg_instance->Compile();
 		value = new WordIndex(arg_instance, 0);
 	}
 	else

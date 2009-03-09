@@ -24,9 +24,9 @@ llvm::Value *WordInstance::GetOutput(size_t index)
 	return outputs[index];
 }
 
-void WordInstance::Compile(Engine *e)
+void WordInstance::Compile()
 {
-	word->Execute(e, this);
+	word->Execute(this);
 }
 
 WordIndex::WordIndex(WordInstance *word_instance, size_t index)

@@ -22,7 +22,7 @@ public:
 	llvm::Value *GetOutput(size_t index);
 	size_t GetOutputSize() { return outputs.size(); }
 
-	void Compile(Engine *e);
+	void Compile();
 };
 
 class Word
@@ -38,7 +38,7 @@ public:
 	void SetInline(bool inlined) { this->inlined = inlined; }
 	void SetHidden(bool hidden) { this->hidden = hidden; }
 
-	virtual void Execute(Engine* e, WordInstance *instance) = 0;
+	virtual void Execute(WordInstance *instance) = 0;
 };
 
 class WordIndex

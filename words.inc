@@ -58,3 +58,66 @@ void word_inline()
 	Engine::GetSingleton().GetLatest()->SetInline(true);
 }
 
+void word_colon()
+{
+	Engine &e = Engine::GetSingleton();
+	std::string function_name = e.GetLexer()->NextToken();
+	
+	// create function
+	e.CreateWord();
+
+	// read body
+	while(true)
+	{
+		std::string token = e.GetLexer()->NextToken();
+		if(token == ";")
+			break;
+
+		// find word
+		Word *word = e.FindWord(token);
+		if(word == NULL)
+		{
+			// integer?
+			std::istringstream is(token);
+			int number;
+			if(is >> number)
+				word = new LiteralWord(number);
+		}
+		else if(word->IsInline())
+		{
+			// inline
+			word->Execute(NULL);
+			continue;
+		}
+
+		assert(word != NULL);
+
+		// create word instance
+		WordInstance *instance = new WordInstance(word);
+		instance->Compile();
+
+		e.Push(instance);
+	}
+
+	// print word info
+	if(e.GetVerbose())
+		std::cerr << "WORD: " << function_name << " ins:" << e.compiler_args.size() << " outs:" << e.compiler_stack.size() << std::endl;
+
+	// setup outputs
+	llvm::Function *latest = JIT::GetSingleton().GetLatest();
+	for(size_t i = 0; !e.compiler_stack.empty(); i++)
+	{
+		llvm::Value *input = e.compiler_stack.back()->GetOutput();
+		llvm::Value *output = JIT::GetSingleton().CreateOutputArgument();
+
+		JIT::GetSingleton().GetBuilder()->CreateStore(input, output);
+		e.compiler_stack.pop_back();
+	}
+
+	JIT::GetSingleton().GetBuilder()->CreateRetVoid();
+	e.FinishWord(function_name);
+
+	if(e.GetVerbose())
+		JIT::GetSingleton().GetLatest()->dump();
+}
+

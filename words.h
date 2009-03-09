@@ -2,13 +2,6 @@
 
 #include "word.h"
 
-class ColonWord : public Word
-{
-public:
-	std::string GetName() { return ":"; }
-	void Execute(Engine* e, WordInstance *instance);
-};
-
 class FunctionWord : public Word
 {
 	llvm::Function *function;
@@ -25,7 +18,7 @@ public:
 	size_t GetOutputSize() { return outputs; }
 	void SetOutputSize(size_t outputs) { this->outputs = outputs; }
 
-	void Execute(Engine* e, WordInstance *instance);
+	void Execute(WordInstance *instance);
 };
 
 class LiteralWord : public Word
@@ -36,7 +29,7 @@ public:
 
 	std::string GetName() { return "lit"; }
 
-	void Execute(Engine* e, WordInstance *instance);
+	void Execute(WordInstance *instance);
 };
 
 class ArgumentWord : public Word
@@ -47,7 +40,7 @@ public:
 
 	std::string GetName() { return "arg"; }
 
-	void Execute(Engine* e, WordInstance *instance);
+	void Execute(WordInstance *instance);
 };
 
 class StringWord : public Word
@@ -55,6 +48,6 @@ class StringWord : public Word
 public:
 	std::string GetName() { return "s\""; }
 
-	void Execute(Engine* e, WordInstance *instance);
+	void Execute(WordInstance *instance);
 };
 
