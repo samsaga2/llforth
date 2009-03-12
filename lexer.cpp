@@ -39,14 +39,18 @@ std::string Lexer::NextToken()
 std::string Lexer::ReadUntil(char u)
 {
 	std::string word = "";
-	do
+
+	// skip whitespace
+	char c = in.get();
+	while(c <= ' ')
+		c = in.get();
+
+	// read until u
+	while(c != u)
 	{
-		char c = in.get();
-		if(c == u)
-			break;
 		word += c;
+		c = in.get();
 	}
-	while(true);
 
 	return word;
 }
