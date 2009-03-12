@@ -19,6 +19,7 @@ Engine::Engine(std::istream &in) : lexer(in)
 	WORD(InlineWord);
 	WORD(SeeWord);
 	WORD(StringWord);
+	WORD(ExternWord);
 
 	BWORD("+");
 		ARG(0);
@@ -115,6 +116,14 @@ void Engine::ExecuteWord(const std::string &word)
 	}
 
 	throw std::string("unknown word");
+}
+
+void Engine::CreateExternWord(const std::string &word, size_t inputs, size_t outputs)
+{
+	jit.CreateExternWord(word, inputs, outputs);
+
+	latest = new FunctionWord(jit.GetLatest(), inputs, outputs);
+	words.push_back(latest);
 }
 
 void Engine::CreateWord()

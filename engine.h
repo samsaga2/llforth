@@ -34,6 +34,7 @@ public:
 	Word *FindWord(const std::string& word);
 	void ExecuteWord(const std::string& word);
 
+	void CreateExternWord(const std::string &word, size_t inputs, size_t outputs);
 	void CreateWord();
 	void FinishWord(const std::string& word);
 	void Push(WordInstance *instance);

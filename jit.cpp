@@ -33,6 +33,27 @@ llvm::Value *JIT::CreateOutputArgument()
 	return arg;
 }
 
+void JIT::CreateExternWord(const std::string &word, size_t inputs, size_t outputs)
+{
+	std::vector<const llvm::Type *> args;
+
+	// input arguments
+	for(size_t i = 0; i < inputs; i++)
+		args.push_back(llvm::Type::Int32Ty);
+
+	// output arguments
+	const llvm::Type *ret_type = llvm::Type::VoidTy;
+	if(outputs == 1)
+		ret_type = llvm::Type::Int32Ty;
+	else if(outputs > 19)
+		for(size_t i = 0; i < outputs; i++)
+			args.push_back(llvm::PointerType::getUnqual(llvm::Type::Int32Ty));
+	
+	// create function
+	llvm::FunctionType *ftype = llvm::FunctionType::get(ret_type, args, false);
+	latest = llvm::Function::Create(ftype, llvm::Function::ExternalLinkage, word, &module);
+}
+
 void JIT::CreateWord()
 {
 	// create entry
@@ -40,7 +61,7 @@ void JIT::CreateWord()
 	builder = new llvm::IRBuilder<>(latest_entry);
 }
 
-void JIT::FinishWord(const std::string& word)
+void JIT::FinishWord(const std::string &word)
 {
 	size_t inputs = inp_args.size();
 	size_t outputs = out_args.size();

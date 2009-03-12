@@ -81,6 +81,9 @@ void PrintStackWord::Execute(Engine* e, bool compiling)
 
 FunctionWord::FunctionWord(llvm::Function *_function, size_t _inputs, size_t _outputs) : function(_function), inputs(_inputs), outputs(_outputs)
 {
+	const llvm::FunctionType *ftype = function->getFunctionType();
+	if(ftype->getReturnType() != llvm::Type::VoidTy)
+		outputs--;
 }
 
 void FunctionWord::Execute(Engine* e, bool compiling)
@@ -99,11 +102,15 @@ void FunctionWord::Execute(Engine* e, bool compiling)
 	for(size_t i = 0; i < outputs; i++)
 		arguments[i + inputs].PointerVal = (llvm::PointerTy)&outs[i];
 
-	e->GetJIT()->GetExecutionEngine()->runFunction(function, arguments);
+	llvm::GenericValue ret = e->GetJIT()->GetExecutionEngine()->runFunction(function, arguments);
 
 	// push outs
 	for(size_t i = 0; i < outputs; i++)
 		e->runtime_stack.push_front(outs[i]);
+	
+	const llvm::FunctionType *ftype = function->getFunctionType();
+	if(ftype->getReturnType() != llvm::Type::VoidTy)
+		e->runtime_stack.push_front((int)ret.PointerVal);	
 }
 
 void FunctionWord::Compile(Engine *e, WordInstance *instance)
@@ -187,5 +194,46 @@ void StringWord::Compile(Engine* e, WordInstance *instance)
 	llvm::GlobalVariable *string_gv = new llvm::GlobalVariable(string_constant->getType(), true, llvm::GlobalValue::InternalLinkage, string_constant, "", e->GetJIT()->GetModule(), false);
 	llvm::Value *ptr_to_int = e->GetJIT()->GetBuilder()->CreatePtrToInt(string_gv, llvm::Type::Int32Ty);
 	instance->SetOutput(1, ptr_to_int);
+}
+
+void ExternWord::Execute(Engine* e, bool compiling)
+{
+	if(compiling)
+		assert(false);
+
+	std::string function_name = e->GetLexer()->NextToken();
+
+	// assert (
+	assert(e->GetLexer()->NextWord() == "(");
+
+	bool inputs = true;
+	size_t inputs_size = 0;
+	size_t outputs_size = 0;
+	while(true)
+	{
+		std::string token = e->GetLexer()->NextWord();
+		if(token == ")")
+			break;
+		else if(token == "i")
+		{
+			if(inputs)
+				inputs_size++;
+			else
+				outputs_size++;
+		}
+		else if(token == "--")
+		{
+			assert(inputs);
+			inputs = false;
+		}
+		else
+			assert(false && "Unknown type");
+	}
+	assert(!inputs && "Missing `--' parsing extern");
+
+	e->CreateExternWord(function_name, inputs_size, outputs_size);
+
+	if(e->GetVerbose())
+		e->GetJIT()->GetLatest()->dump();
 }
 

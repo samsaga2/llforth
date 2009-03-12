@@ -10,4 +10,5 @@ over ( i i -- i i )
 rot ( i i i -- i i i )
 swap ( i i -- i i )
 see ( -- )
+extern
 

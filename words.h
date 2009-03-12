@@ -84,3 +84,12 @@ public:
 	void Compile(Engine* e, WordInstance *instance);
 };
 
+class ExternWord : public Word
+{
+public:
+	std::string GetName() { return "extern"; }
+
+	void Execute(Engine* e, bool compiling);
+	void Compile(Engine* e, WordInstance *instance) { assert(false); }
+};
+

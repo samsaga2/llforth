@@ -14,7 +14,7 @@
 
 static bool verbose = false;
 static std::string input_filename("");
-static std::string output_filename("a.obj");
+static std::string output_filename("");
 static bool optimize = false;
 
 void show_help()

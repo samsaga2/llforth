@@ -1,0 +1,6 @@
+extern puts ( i -- i )
+: type ( addr len -- ) drop puts ;
+
+: hello-world s" Hello world!" ;
+: main hello-world type ;
+

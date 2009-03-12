@@ -34,6 +34,7 @@ public:
 	llvm::Function *GetLatest() { return latest; }
 	llvm::ExecutionEngine *GetExecutionEngine() { return jit; }
 
+	void CreateExternWord(const std::string &word, size_t inputs, size_t outputs);
 	void CreateWord();
 	void FinishWord(const std::string& word);
 
