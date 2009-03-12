@@ -6,16 +6,14 @@ class ColonWord : public Word
 {
 public:
 	std::string GetName() { return ":"; }
-	void Execute(Engine* e, bool compiling);
-	void Compile(Engine* e, WordInstance *instance) { throw std::string("not supported"); }
+	void Execute(Engine* e, WordInstance *instance);
 };
 
 class PrintStackWord : public Word
 {
 public:
 	std::string GetName() { return ".s"; }
-	void Execute(Engine* e, bool compiling);
-	void Compile(Engine* e, WordInstance *instance) { throw std::string("not supported"); }
+	void Execute(Engine* e, WordInstance *instance);
 };
 
 class FunctionWord : public Word
@@ -29,8 +27,7 @@ public:
 	std::string GetName() { return function->getName(); }
 	llvm::Function *GetFunction() { return function; }
 
-	void Execute(Engine* e, bool compiling);
-	void Compile(Engine *e, WordInstance *instance);
+	void Execute(Engine* e, WordInstance *instance);
 };
 
 class LiteralWord : public Word
@@ -41,8 +38,7 @@ public:
 
 	std::string GetName() { return "lit"; }
 
-	void Execute(Engine* e, bool compiling);
-	void Compile(Engine* e, WordInstance *instance);
+	void Execute(Engine* e, WordInstance *instance);
 };
 
 class ArgumentWord : public Word
@@ -53,8 +49,7 @@ public:
 
 	std::string GetName() { return "arg"; }
 
-	void Execute(Engine* e, bool compiling) { assert(false); }
-	void Compile(Engine* e, WordInstance *instance);
+	void Execute(Engine* e, WordInstance *instance);
 };
 
 class InlineWord : public Word
@@ -62,8 +57,7 @@ class InlineWord : public Word
 public:
 	std::string GetName() { return "inline"; }
 
-	void Execute(Engine* e, bool compiling);
-	void Compile(Engine* e, WordInstance *instance);
+	void Execute(Engine* e, WordInstance *instance);
 };
 
 class SeeWord : public Word
@@ -71,8 +65,7 @@ class SeeWord : public Word
 public:
 	std::string GetName() { return "see"; }
 
-	void Execute(Engine* e, bool compiling);
-	void Compile(Engine* e, WordInstance *instance) { assert(false); }
+	void Execute(Engine* e, WordInstance *instance);
 };
 
 class StringWord : public Word
@@ -80,8 +73,7 @@ class StringWord : public Word
 public:
 	std::string GetName() { return "s\""; }
 
-	void Execute(Engine* e, bool compiling) { assert(false); }
-	void Compile(Engine* e, WordInstance *instance);
+	void Execute(Engine* e, WordInstance *instance);
 };
 
 class ExternWord : public Word
@@ -89,7 +81,6 @@ class ExternWord : public Word
 public:
 	std::string GetName() { return "extern"; }
 
-	void Execute(Engine* e, bool compiling);
-	void Compile(Engine* e, WordInstance *instance) { assert(false); }
+	void Execute(Engine* e, WordInstance *instance);
 };
 

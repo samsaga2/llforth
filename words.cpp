@@ -4,10 +4,9 @@
 #include <iostream>
 #include <llvm/ExecutionEngine/GenericValue.h>
 
-void ColonWord::Execute(Engine* e, bool compiling)
+void ColonWord::Execute(Engine* e, WordInstance *instance)
 {
-	if(compiling)
-		assert(false);
+	assert(instance == NULL);
 
 	std::string function_name = e->GetLexer()->NextToken();
 	
@@ -34,7 +33,7 @@ void ColonWord::Execute(Engine* e, bool compiling)
 		else if(word->IsInline())
 		{
 			// inline
-			word->Execute(e, true);
+			word->Execute(e, NULL);
 			continue;
 		}
 
@@ -69,10 +68,9 @@ void ColonWord::Execute(Engine* e, bool compiling)
 		e->GetJIT()->GetLatest()->dump();
 }
 
-void PrintStackWord::Execute(Engine* e, bool compiling)
+void PrintStackWord::Execute(Engine* e, WordInstance *instance)
 {
-	if(compiling)
-		assert(false);
+	assert(instance == NULL);
 
 	for(std::list<int>::reverse_iterator it = e->runtime_stack.rbegin(); it != e->runtime_stack.rend(); it++)
 		std::cout << "  " << *it;
@@ -86,94 +84,91 @@ FunctionWord::FunctionWord(llvm::Function *_function, size_t _inputs, size_t _ou
 		outputs--;
 }
 
-void FunctionWord::Execute(Engine* e, bool compiling)
+void FunctionWord::Execute(Engine* e, WordInstance *instance)
 {
-	// setup inputs
-	std::vector<llvm::GenericValue> arguments(inputs + outputs);
-	for(size_t i = 0; i < inputs; i++)
+	if(instance == NULL)
 	{
-		int number = e->runtime_stack.front();
-		arguments[i].IntVal = llvm::APInt(32, number);
-		e->runtime_stack.pop_front();
+		// setup inputs
+		std::vector<llvm::GenericValue> arguments(inputs + outputs);
+		for(size_t i = 0; i < inputs; i++)
+		{
+			int number = e->runtime_stack.front();
+			arguments[i].IntVal = llvm::APInt(32, number);
+			e->runtime_stack.pop_front();
+		}
+
+		// setup outputs
+		int outs[outputs];
+		for(size_t i = 0; i < outputs; i++)
+			arguments[i + inputs].PointerVal = (llvm::PointerTy)&outs[i];
+
+		llvm::GenericValue ret = e->GetJIT()->GetExecutionEngine()->runFunction(function, arguments);
+
+		// push outs
+		for(size_t i = 0; i < outputs; i++)
+			e->runtime_stack.push_front(outs[i]);
+		
+		const llvm::FunctionType *ftype = function->getFunctionType();
+		if(ftype->getReturnType() != llvm::Type::VoidTy)
+			e->runtime_stack.push_front((int)ret.PointerVal);	
 	}
+	else
+	{
+		// setup inputs
+		std::vector<llvm::Value *> arguments(inputs + outputs);
+		for(size_t i = 0; i < inputs; i++)
+		{
+			WordIndex *input = e->Pop();
+			arguments[i] = input->GetOutput();
+		}
 
-	// setup outputs
-	int outs[outputs];
-	for(size_t i = 0; i < outputs; i++)
-		arguments[i + inputs].PointerVal = (llvm::PointerTy)&outs[i];
+		// setup outputs
+		for(size_t i = 0; i < outputs; i++)
+		{
+			llvm::Value *value = e->GetJIT()->GetBuilder()->CreateAlloca(llvm::Type::Int32Ty);
+			arguments[i + inputs] = value;
+			instance->SetOutput(i, value);
+		}
 
-	llvm::GenericValue ret = e->GetJIT()->GetExecutionEngine()->runFunction(function, arguments);
+		// append call
+		e->GetJIT()->GetBuilder()->CreateCall<std::vector<llvm::Value *>::iterator>(function, arguments.begin(), arguments.end());
 
-	// push outs
-	for(size_t i = 0; i < outputs; i++)
-		e->runtime_stack.push_front(outs[i]);
-	
-	const llvm::FunctionType *ftype = function->getFunctionType();
-	if(ftype->getReturnType() != llvm::Type::VoidTy)
-		e->runtime_stack.push_front((int)ret.PointerVal);	
+		// finish outputs
+		for(size_t i = 0; i < outputs; i++)
+		{
+			llvm::Value *output = instance->GetOutput(i);
+			output = e->GetJIT()->GetBuilder()->CreateLoad(output);
+			instance->SetOutput(i, output);
+		}
+	}
 }
 
-void FunctionWord::Compile(Engine *e, WordInstance *instance)
+void LiteralWord::Execute(Engine* e, WordInstance *instance)
 {
-	// setup inputs
-	std::vector<llvm::Value *> arguments(inputs + outputs);
-	for(size_t i = 0; i < inputs; i++)
+	if(instance == NULL)
+		e->runtime_stack.push_front(number);
+	else
 	{
-		WordIndex *input = e->Pop();
-		arguments[i] = input->GetOutput();
-	}
-
-	// setup outputs
-	for(size_t i = 0; i < outputs; i++)
-	{
-		llvm::Value *value = e->GetJIT()->GetBuilder()->CreateAlloca(llvm::Type::Int32Ty);
-		arguments[i + inputs] = value;
-		instance->SetOutput(i, value);
-	}
-
-	// append call
-	e->GetJIT()->GetBuilder()->CreateCall<std::vector<llvm::Value *>::iterator>(function, arguments.begin(), arguments.end());
-
-	// finish outputs
-	for(size_t i = 0; i < outputs; i++)
-	{
-		llvm::Value *output = instance->GetOutput(i);
-		output = e->GetJIT()->GetBuilder()->CreateLoad(output);
-		instance->SetOutput(i, output);
+		llvm::Value *output = llvm::ConstantInt::get(llvm::APInt(32, number));
+		instance->SetOutput(0, output);
 	}
 }
 
-void LiteralWord::Execute(Engine* e, bool compiling)
+void ArgumentWord::Execute(Engine* e, WordInstance *instance)
 {
-	e->runtime_stack.push_front(number);
-}
-
-void LiteralWord::Compile(Engine* e, WordInstance *instance)
-{
-	llvm::Value *output = llvm::ConstantInt::get(llvm::APInt(32, number));
-	instance->SetOutput(0, output);
-}
-
-void ArgumentWord::Compile(Engine* e, WordInstance *instance)
-{
+	assert(instance != NULL);
 	llvm::Value *output = e->GetJIT()->CreateInputArgument();
 	instance->SetOutput(0, output);
 }
 
-void InlineWord::Execute(Engine* e, bool compiling)
+void InlineWord::Execute(Engine* e, WordInstance *instance)
 {
 	e->GetLatest()->SetInline(true);
 }
 
-void InlineWord::Compile(Engine* e, WordInstance *instance)
+void SeeWord::Execute(Engine* e, WordInstance *instance)
 {
-	e->GetLatest()->SetInline(true);
-}
-
-void SeeWord::Execute(Engine* e, bool compiling)
-{
-	if(compiling)
-		assert(false);
+	assert(instance == NULL);
 
 	std::string word = e->GetLexer()->NextWord();
 	llvm::Function *function = e->GetJIT()->GetModule()->getFunction(word);
@@ -181,8 +176,10 @@ void SeeWord::Execute(Engine* e, bool compiling)
 		function->dump();
 }
 
-void StringWord::Compile(Engine* e, WordInstance *instance)
+void StringWord::Execute(Engine* e, WordInstance *instance)
 {
+	assert(instance != NULL);
+
 	std::string string = e->GetLexer()->ReadUntil('"');
 
 	// set string size
@@ -196,10 +193,9 @@ void StringWord::Compile(Engine* e, WordInstance *instance)
 	instance->SetOutput(1, ptr_to_int);
 }
 
-void ExternWord::Execute(Engine* e, bool compiling)
+void ExternWord::Execute(Engine* e, WordInstance *instance)
 {
-	if(compiling)
-		assert(false);
+	assert(instance == NULL);
 
 	std::string function_name = e->GetLexer()->NextToken();
 

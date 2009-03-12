@@ -32,12 +32,10 @@ public:
 	Word() : inlined(false) { }
 
 	virtual std::string GetName() = 0;
-
-	virtual void Execute(Engine* e, bool compiling) = 0;
-	virtual void Compile(Engine *e, WordInstance *instance) = 0;
-
 	bool IsInline() { return inlined; }
 	void SetInline(bool inlined) { this->inlined = inlined; }
+
+	virtual void Execute(Engine* e, WordInstance *instance) = 0;
 };
 
 class WordIndex
