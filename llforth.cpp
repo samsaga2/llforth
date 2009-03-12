@@ -17,6 +17,11 @@ static std::string input_filename("");
 static std::string output_filename("");
 static bool optimize = false;
 
+extern void kk()
+{
+	printf("KAKA\n");
+}
+
 void show_help()
 {
 	std::cout << "llforth [OPTIONS]..." << std::endl << std::endl;
@@ -74,13 +79,18 @@ void compile(std::istream &in)
 			pm.add(new llvm::TargetData(module));
 			pm.add(llvm::createIPSCCPPass());
 			pm.add(llvm::createGlobalOptimizerPass());
-			pm.add(llvm::createInstructionCombiningPass());
+//			pm.add(llvm::createInstructionCombiningPass()); doesn't works well with CallingConv::Fast
 			pm.add(llvm::createFunctionInliningPass());
 			pm.add(llvm::createGlobalOptimizerPass());
 			pm.add(llvm::createInstructionCombiningPass());
 			pm.add(llvm::createGVNPass());
 			pm.add(llvm::createPromoteMemoryToRegisterPass());
 			pm.add(llvm::createCFGSimplificationPass());
+			pm.add(llvm::createDeadArgEliminationPass());
+			pm.add(llvm::createDeadCodeEliminationPass());
+			pm.add(llvm::createDeadInstEliminationPass());
+			pm.add(llvm::createDeadStoreEliminationPass());
+			pm.add(llvm::createDeadTypeEliminationPass());
 			pm.run(*module);
 		}
 

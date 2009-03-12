@@ -1,5 +1,6 @@
 #include "jit.h"
 #include <llvm/Analysis/Verifier.h>
+#include <llvm/CallingConv.h>
 #include <iostream>
 
 JIT::JIT() : module("llforth")
@@ -76,6 +77,8 @@ void JIT::FinishWord(const std::string &word)
 	// create function
 	llvm::FunctionType *ftype = llvm::FunctionType::get(llvm::Type::VoidTy, args, false);
 	latest = llvm::Function::Create(ftype, llvm::Function::ExternalLinkage, word, &module);
+	if(optimize)
+		latest->setCallingConv(llvm::CallingConv::Fast);
 	latest->getBasicBlockList().push_back(latest_entry);
 
 	// fix input args
