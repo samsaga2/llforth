@@ -3,21 +3,7 @@
 #include "jit.h"
 #include <sstream>
 
-void word_dots()
-{
-	Engine &e = Engine::GetSingleton();
-	for(std::list<int>::reverse_iterator it = e.runtime_stack.rbegin(); it != e.runtime_stack.rend(); it++)
-		std::cout << "  " << *it;
-	std::cout << std::endl;
-}
-
-void word_see()
-{
-	std::string word = Engine::GetSingleton().GetLexer()->NextWord();
-	llvm::Function *function = JIT::GetSingleton().GetModule()->getFunction(word);
-	if(function != NULL)
-		function->dump();
-}
+#include "words.inc"
 
 Engine::Engine()
 {
@@ -35,67 +21,7 @@ Engine::Engine()
 	JIT::GetSingleton().AddInternalSymbol(name, (void *)&func); \
 	CreateExternWord(name, inputs, outputs);
 
-	IWORD(".s", word_dots, 0, 0);
-	IWORD("see", word_see, 0, 0);
-	WORD(ColonWord);
-	WORD(InlineWord);
-	WORD(StringWord);
-	WORD(ExternWord);
-
-	BWORD("+");
-		ARG(0);
-		ARG(1);
-		OUT(0, BUILDER->CreateAdd(arg0, arg1));
-	EWORD();
-	BWORD("-");
-		ARG(0);
-		ARG(1);
-		OUT(0, BUILDER->CreateSub(arg0, arg1));
-	EWORD();
-	BWORD("*");
-		ARG(0);
-		ARG(1);
-		OUT(0, BUILDER->CreateMul(arg0, arg1));
-	EWORD();
-	BWORD("/");
-		ARG(0);
-		ARG(1);
-		OUT(0, BUILDER->CreateSDiv(arg0, arg1));
-	EWORD();
-	BWORD("drop");
-		ARG(0);
-	EWORD();
-	BWORD("dup");
-		ARG(0);
-		OUT(0, arg0);
-		OUT(1, arg0);
-	EWORD();
-	BWORD("over");
-		ARG(0);
-		ARG(1);
-		OUT(0, arg1);
-		OUT(1, arg0);
-		OUT(2, arg1);
-	EWORD();
-	BWORD("rot");
-		ARG(0);
-		ARG(1);
-		ARG(2);
-		OUT(0, arg1);
-		OUT(1, arg0);
-		OUT(2, arg2);
-	EWORD();
-	BWORD("swap");
-		ARG(0);
-		ARG(1);
-		OUT(0, arg0);
-		OUT(1, arg1);
-	EWORD();
-	BWORD("nip");
-		ARG(0);
-		ARG(1);
-		OUT(0, arg0);
-	EWORD();
+	#include "words_declare.inc"
 
 #undef WORD
 #undef BWORD
