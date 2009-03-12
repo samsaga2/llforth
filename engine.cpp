@@ -70,6 +70,11 @@ Engine::Engine(std::istream &in) : lexer(in)
 		OUT(0, arg0);
 		OUT(1, arg1);
 	EWORD();
+	BWORD("nip");
+		ARG(0);
+		ARG(1);
+		OUT(0, arg0);
+	EWORD();
 }
 
 void Engine::MainLoop()
