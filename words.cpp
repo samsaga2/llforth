@@ -1,8 +1,9 @@
-#include "words.h"
-#include "engine.h"
 #include <sstream>
 #include <iostream>
 #include <llvm/ExecutionEngine/GenericValue.h>
+#include "words.h"
+#include "engine.h"
+#include "jit.h"
 
 void ColonWord::Execute(Engine* e, WordInstance *instance)
 {
@@ -51,30 +52,21 @@ void ColonWord::Execute(Engine* e, WordInstance *instance)
 		std::cerr << "WORD: " << function_name << " ins:" << e->compiler_args.size() << " outs:" << e->compiler_stack.size() << std::endl;
 
 	// setup outputs
-	llvm::Function *latest = e->GetJIT()->GetLatest();
+	llvm::Function *latest = JIT::GetSingleton().GetLatest();
 	for(size_t i = 0; !e->compiler_stack.empty(); i++)
 	{
 		llvm::Value *input = e->compiler_stack.back()->GetOutput();
-		llvm::Value *output = e->GetJIT()->CreateOutputArgument();
+		llvm::Value *output = JIT::GetSingleton().CreateOutputArgument();
 
-		e->GetJIT()->GetBuilder()->CreateStore(input, output);
+		JIT::GetSingleton().GetBuilder()->CreateStore(input, output);
 		e->compiler_stack.pop_back();
 	}
 
-	e->GetJIT()->GetBuilder()->CreateRetVoid();
+	JIT::GetSingleton().GetBuilder()->CreateRetVoid();
 	e->FinishWord(function_name);
 
 	if(e->GetVerbose())
-		e->GetJIT()->GetLatest()->dump();
-}
-
-void PrintStackWord::Execute(Engine* e, WordInstance *instance)
-{
-	assert(instance == NULL);
-
-	for(std::list<int>::reverse_iterator it = e->runtime_stack.rbegin(); it != e->runtime_stack.rend(); it++)
-		std::cout << "  " << *it;
-	std::cout << std::endl;
+		JIT::GetSingleton().GetLatest()->dump();
 }
 
 FunctionWord::FunctionWord(llvm::Function *_function, size_t _inputs, size_t _outputs) : function(_function), inputs(_inputs), outputs(_outputs)
@@ -102,7 +94,7 @@ void FunctionWord::Execute(Engine* e, WordInstance *instance)
 		for(size_t i = 0; i < outputs; i++)
 			arguments[i + inputs].PointerVal = (llvm::PointerTy)&outs[i];
 
-		llvm::GenericValue ret = e->GetJIT()->GetExecutionEngine()->runFunction(function, arguments);
+		llvm::GenericValue ret = JIT::GetSingleton().GetExecutionEngine()->runFunction(function, arguments);
 
 		// push outs
 		for(size_t i = 0; i < outputs; i++)
@@ -125,19 +117,19 @@ void FunctionWord::Execute(Engine* e, WordInstance *instance)
 		// setup outputs
 		for(size_t i = 0; i < outputs; i++)
 		{
-			llvm::Value *value = e->GetJIT()->GetBuilder()->CreateAlloca(llvm::Type::Int32Ty);
+			llvm::Value *value = JIT::GetSingleton().GetBuilder()->CreateAlloca(llvm::Type::Int32Ty);
 			arguments[i + inputs] = value;
 			instance->SetOutput(i, value);
 		}
 
 		// append call
-		e->GetJIT()->GetBuilder()->CreateCall<std::vector<llvm::Value *>::iterator>(function, arguments.begin(), arguments.end());
+		JIT::GetSingleton().GetBuilder()->CreateCall<std::vector<llvm::Value *>::iterator>(function, arguments.begin(), arguments.end());
 
 		// finish outputs
 		for(size_t i = 0; i < outputs; i++)
 		{
 			llvm::Value *output = instance->GetOutput(i);
-			output = e->GetJIT()->GetBuilder()->CreateLoad(output);
+			output = JIT::GetSingleton().GetBuilder()->CreateLoad(output);
 			instance->SetOutput(i, output);
 		}
 	}
@@ -157,23 +149,13 @@ void LiteralWord::Execute(Engine* e, WordInstance *instance)
 void ArgumentWord::Execute(Engine* e, WordInstance *instance)
 {
 	assert(instance != NULL);
-	llvm::Value *output = e->GetJIT()->CreateInputArgument();
+	llvm::Value *output = JIT::GetSingleton().CreateInputArgument();
 	instance->SetOutput(0, output);
 }
 
 void InlineWord::Execute(Engine* e, WordInstance *instance)
 {
 	e->GetLatest()->SetInline(true);
-}
-
-void SeeWord::Execute(Engine* e, WordInstance *instance)
-{
-	assert(instance == NULL);
-
-	std::string word = e->GetLexer()->NextWord();
-	llvm::Function *function = e->GetJIT()->GetModule()->getFunction(word);
-	if(function != NULL)
-		function->dump();
 }
 
 void StringWord::Execute(Engine* e, WordInstance *instance)
@@ -188,8 +170,8 @@ void StringWord::Execute(Engine* e, WordInstance *instance)
 
 	// set string pointer
 	llvm::Constant *string_constant = llvm::ConstantArray::get(string.c_str(), true);
-	llvm::GlobalVariable *string_gv = new llvm::GlobalVariable(string_constant->getType(), true, llvm::GlobalValue::InternalLinkage, string_constant, "", e->GetJIT()->GetModule(), false);
-	llvm::Value *ptr_to_int = e->GetJIT()->GetBuilder()->CreatePtrToInt(string_gv, llvm::Type::Int32Ty);
+	llvm::GlobalVariable *string_gv = new llvm::GlobalVariable(string_constant->getType(), true, llvm::GlobalValue::InternalLinkage, string_constant, "", JIT::GetSingleton().GetModule(), false);
+	llvm::Value *ptr_to_int = JIT::GetSingleton().GetBuilder()->CreatePtrToInt(string_gv, llvm::Type::Int32Ty);
 	instance->SetOutput(1, ptr_to_int);
 }
 
@@ -230,6 +212,6 @@ void ExternWord::Execute(Engine* e, WordInstance *instance)
 	e->CreateExternWord(function_name, inputs_size, outputs_size);
 
 	if(e->GetVerbose())
-		e->GetJIT()->GetLatest()->dump();
+		JIT::GetSingleton().GetLatest()->dump();
 }
 

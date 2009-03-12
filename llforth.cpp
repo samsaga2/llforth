@@ -11,6 +11,7 @@
 #include <llvm/LinkAllPasses.h>
 #include <llvm/Target/TargetData.h>
 #include "engine.h"
+#include "jit.h"
 
 static bool verbose = false;
 static std::string input_filename("");
@@ -64,14 +65,15 @@ void read_args(int argc, char **argv)
 
 void compile(std::istream &in)
 {
-	Engine engine(in);
-	engine.SetOptimize(optimize);
-	engine.SetVerbose(verbose);
-	engine.MainLoop();
+	JIT::GetSingleton().SetOptimize(optimize);
+	Engine &e = Engine::GetSingleton();
+	e.SetInputStream(in);
+	e.SetVerbose(verbose);
+	e.MainLoop();
 
 	if(output_filename != "")
 	{
-		llvm::Module *module = engine.GetJIT()->GetModule();
+		llvm::Module *module = JIT::GetSingleton().GetModule();
 
 		if(optimize)
 		{

@@ -9,13 +9,6 @@ public:
 	void Execute(Engine* e, WordInstance *instance);
 };
 
-class PrintStackWord : public Word
-{
-public:
-	std::string GetName() { return ".s"; }
-	void Execute(Engine* e, WordInstance *instance);
-};
-
 class FunctionWord : public Word
 {
 	llvm::Function *function;
@@ -56,14 +49,6 @@ class InlineWord : public Word
 {
 public:
 	std::string GetName() { return "inline"; }
-
-	void Execute(Engine* e, WordInstance *instance);
-};
-
-class SeeWord : public Word
-{
-public:
-	std::string GetName() { return "see"; }
 
 	void Execute(Engine* e, WordInstance *instance);
 };

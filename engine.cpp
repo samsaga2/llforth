@@ -1,45 +1,66 @@
 #include "engine.h"
 #include "words.h"
+#include "jit.h"
 #include <sstream>
 
-#define WORD(name) words.push_back(new name())
-#define BWORD(name) CreateWord(); { std::string _name = name
-#define JIT jit.GetBuilder()
-#define ARG(number) llvm::Value *arg##number = jit.CreateInputArgument()
-#define OUT(number, val) JIT->CreateStore(val, jit.CreateOutputArgument())
-#define EWORD() JIT->CreateRetVoid(); FinishWord(_name); }
+void word_dots()
+{
+	Engine &e = Engine::GetSingleton();
+	for(std::list<int>::reverse_iterator it = e.runtime_stack.rbegin(); it != e.runtime_stack.rend(); it++)
+		std::cout << "  " << *it;
+	std::cout << std::endl;
+}
 
-Engine::Engine(std::istream &in) : lexer(in)
+void word_see()
+{
+	std::string word = Engine::GetSingleton().GetLexer()->NextWord();
+	llvm::Function *function = JIT::GetSingleton().GetModule()->getFunction(word);
+	if(function != NULL)
+		function->dump();
+}
+
+Engine::Engine()
 {
 	verbose = false;
 	latest = NULL;
+	lexer = new Lexer(std::cin);
 
+#define WORD(name) words.push_back(new name())
+#define BWORD(name) CreateWord(); { std::string _name = name
+#define BUILDER JIT::GetSingleton().GetBuilder()
+#define ARG(number) llvm::Value *arg##number = JIT::GetSingleton().CreateInputArgument()
+#define OUT(number, val) BUILDER->CreateStore(val, JIT::GetSingleton().CreateOutputArgument())
+#define EWORD() BUILDER->CreateRetVoid(); FinishWord(_name); }
+#define IWORD(name, func, inputs, outputs) \
+	JIT::GetSingleton().AddInternalSymbol(name, (void *)&func); \
+	CreateExternWord(name, inputs, outputs);
+
+	IWORD(".s", word_dots, 0, 0);
+	IWORD("see", word_see, 0, 0);
 	WORD(ColonWord);
-	WORD(PrintStackWord);
 	WORD(InlineWord);
-	WORD(SeeWord);
 	WORD(StringWord);
 	WORD(ExternWord);
 
 	BWORD("+");
 		ARG(0);
 		ARG(1);
-		OUT(0, JIT->CreateAdd(arg0, arg1));
+		OUT(0, BUILDER->CreateAdd(arg0, arg1));
 	EWORD();
 	BWORD("-");
 		ARG(0);
 		ARG(1);
-		OUT(0, JIT->CreateSub(arg0, arg1));
+		OUT(0, BUILDER->CreateSub(arg0, arg1));
 	EWORD();
 	BWORD("*");
 		ARG(0);
 		ARG(1);
-		OUT(0, JIT->CreateMul(arg0, arg1));
+		OUT(0, BUILDER->CreateMul(arg0, arg1));
 	EWORD();
 	BWORD("/");
 		ARG(0);
 		ARG(1);
-		OUT(0, JIT->CreateSDiv(arg0, arg1));
+		OUT(0, BUILDER->CreateSDiv(arg0, arg1));
 	EWORD();
 	BWORD("drop");
 		ARG(0);
@@ -75,6 +96,31 @@ Engine::Engine(std::istream &in) : lexer(in)
 		ARG(1);
 		OUT(0, arg0);
 	EWORD();
+
+#undef WORD
+#undef BWORD
+#undef JIT
+#undef BUILDER
+#undef ARG
+#undef OUT
+#undef EWORD
+}
+
+Engine::~Engine()
+{
+	delete lexer;
+}
+
+void Engine::SetInputStream(std::istream &in)
+{
+	delete lexer;
+	lexer = new Lexer(in);
+}
+
+Engine &Engine::GetSingleton()
+{
+	static Engine engine;
+	return engine;
 }
 
 void Engine::MainLoop()
@@ -83,7 +129,7 @@ void Engine::MainLoop()
 	{
 		while(true)
 		{
-			std::string word = lexer.NextWord();
+			std::string word = lexer->NextWord();
 			ExecuteWord(word);
 		}
 	}
@@ -125,15 +171,15 @@ void Engine::ExecuteWord(const std::string &word)
 
 void Engine::CreateExternWord(const std::string &word, size_t inputs, size_t outputs)
 {
-	jit.CreateExternWord(word, inputs, outputs);
+	JIT::GetSingleton().CreateExternWord(word, inputs, outputs);
 
-	latest = new FunctionWord(jit.GetLatest(), inputs, outputs);
+	latest = new FunctionWord(JIT::GetSingleton().GetLatest(), inputs, outputs);
 	words.push_back(latest);
 }
 
 void Engine::CreateWord()
 {
-	jit.CreateWord();
+	JIT::GetSingleton().CreateWord();
 	latest = NULL;
 
 	compiler_stack.clear();
@@ -142,11 +188,11 @@ void Engine::CreateWord()
 
 void Engine::FinishWord(const std::string& word)
 {
-	size_t inputs = jit.GetInputSize();
-	size_t outputs = jit.GetOutputSize();
-	jit.FinishWord(word);
+	size_t inputs = JIT::GetSingleton().GetInputSize();
+	size_t outputs = JIT::GetSingleton().GetOutputSize();
+	JIT::GetSingleton().FinishWord(word);
 
-	latest = new FunctionWord(jit.GetLatest(), inputs, outputs);
+	latest = new FunctionWord(JIT::GetSingleton().GetLatest(), inputs, outputs);
 	words.push_back(latest);
 }
 

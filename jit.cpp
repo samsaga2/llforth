@@ -2,6 +2,12 @@
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/CallingConv.h>
 #include <iostream>
+#include <dlfcn.h>
+
+static void *findSymbol(const std::string &str)
+{
+	JIT::GetSingleton().FindSymbol(str);
+}
 
 JIT::JIT() : module("llforth")
 {
@@ -10,6 +16,7 @@ JIT::JIT() : module("llforth")
 	builder = NULL;
 
 	jit = llvm::ExecutionEngine::create(&module);
+	jit->InstallLazyFunctionCreator(findSymbol);
 
 	module_provider = new llvm::ExistingModuleProvider(&module);
 	fpm = new llvm::FunctionPassManager(module_provider);
@@ -18,6 +25,12 @@ JIT::JIT() : module("llforth")
 	fpm->add(llvm::createGVNPass());
 	fpm->add(llvm::createCFGSimplificationPass());
 	fpm->add(llvm::createPromoteMemoryToRegisterPass());
+}
+
+JIT &JIT::GetSingleton()
+{
+	static JIT jit;
+	return jit;
 }
 
 llvm::Value *JIT::CreateInputArgument()
@@ -108,5 +121,13 @@ void JIT::FinishWord(const std::string &word)
 	llvm::verifyFunction(*latest);
 	if(optimize)
 		fpm->run(*latest);
+}
+
+void *JIT::FindSymbol(const std::string &str)
+{
+	if(extern_symbols.find(str) == extern_symbols.end())
+		return dlsym(RTLD_DEFAULT, str.c_str());
+	else
+		return extern_symbols[str];
 }
 
