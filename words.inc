@@ -53,4 +53,8 @@ void word_extern()
 		JIT::GetSingleton().GetLatest()->dump();
 }
 
+void word_inline()
+{
+	Engine::GetSingleton().GetLatest()->SetInline(true);
+}
 

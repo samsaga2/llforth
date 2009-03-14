@@ -12,7 +12,7 @@ class Engine
 
 	typedef std::list<Word *> Words;
 	Words words;
-	Word *latest;
+	FunctionWord *latest;
 
 	Engine();
 public:
@@ -28,7 +28,7 @@ public:
 	void SetVerbose(bool verbose) { this->verbose = verbose; }
 	bool GetVerbose() { return verbose; }
 	Lexer *GetLexer() { return lexer; }
-	Word *GetLatest() { return latest; }
+	FunctionWord *GetLatest() { return latest; }
 
 	void MainLoop();
 	Word *FindWord(const std::string& word);

@@ -15,10 +15,15 @@ class FunctionWord : public Word
 	size_t inputs;
 	size_t outputs;
 public:
-	FunctionWord(llvm::Function *_function, size_t _inputs, size_t _outputs);
+	FunctionWord();
 
 	std::string GetName() { return function->getName(); }
 	llvm::Function *GetFunction() { return function; }
+	void SetFunction(llvm::Function* function) { this->function = function; }
+	size_t GetInputSize() { return inputs; }
+	void SetInputSize(size_t inputs) { this->inputs = inputs; }
+	size_t GetOutputSize() { return outputs; }
+	void SetOutputSize(size_t outputs) { this->outputs = outputs; }
 
 	void Execute(Engine* e, WordInstance *instance);
 };
@@ -41,14 +46,6 @@ public:
 	ArgumentWord(int _number) : number(_number) { }
 
 	std::string GetName() { return "arg"; }
-
-	void Execute(Engine* e, WordInstance *instance);
-};
-
-class InlineWord : public Word
-{
-public:
-	std::string GetName() { return "inline"; }
 
 	void Execute(Engine* e, WordInstance *instance);
 };

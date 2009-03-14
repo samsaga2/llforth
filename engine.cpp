@@ -20,6 +20,7 @@ Engine::Engine()
 #define IWORD(name, func, inputs, outputs) \
 	JIT::GetSingleton().AddInternalSymbol(name, (void *)&func); \
 	CreateExternWord(name, inputs, outputs);
+#define INLINE() latest->SetInline(true)
 
 	#include "words_declare.inc"
 
@@ -30,6 +31,8 @@ Engine::Engine()
 #undef ARG
 #undef OUT
 #undef EWORD
+#undef IWORD
+#undef INLINE
 }
 
 Engine::~Engine()
@@ -67,7 +70,7 @@ void Engine::MainLoop()
 Word *Engine::FindWord(const std::string &word)
 {
 	for(Words::reverse_iterator it = words.rbegin(); it != words.rend(); it++)
-		if((*it)->GetName() == word)
+		if(!(*it)->IsHidden() && (*it)->GetName() == word)
 			return *it;
 
 	return NULL;
@@ -99,27 +102,33 @@ void Engine::CreateExternWord(const std::string &word, size_t inputs, size_t out
 {
 	JIT::GetSingleton().CreateExternWord(word, inputs, outputs);
 
-	latest = new FunctionWord(JIT::GetSingleton().GetLatest(), inputs, outputs);
+	latest = new FunctionWord();
+	latest->SetFunction(JIT::GetSingleton().GetLatest());
+	latest->SetInputSize(inputs);
+	latest->SetOutputSize(outputs);
 	words.push_back(latest);
 }
 
 void Engine::CreateWord()
 {
 	JIT::GetSingleton().CreateWord();
-	latest = NULL;
 
 	compiler_stack.clear();
 	compiler_args.clear();
+
+	latest = new FunctionWord();
+	latest->SetHidden(true);
+	words.push_back(latest);
 }
 
 void Engine::FinishWord(const std::string& word)
 {
-	size_t inputs = JIT::GetSingleton().GetInputSize();
-	size_t outputs = JIT::GetSingleton().GetOutputSize();
-	JIT::GetSingleton().FinishWord(word);
+	latest->SetInputSize(JIT::GetSingleton().GetInputSize());
+	latest->SetOutputSize(JIT::GetSingleton().GetOutputSize());
 
-	latest = new FunctionWord(JIT::GetSingleton().GetLatest(), inputs, outputs);
-	words.push_back(latest);
+	JIT::GetSingleton().FinishWord(word);
+	latest->SetFunction(JIT::GetSingleton().GetLatest());
+	latest->SetHidden(false);
 }
 
 void Engine::Push(WordInstance *instance)

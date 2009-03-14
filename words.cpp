@@ -69,19 +69,23 @@ void ColonWord::Execute(Engine* e, WordInstance *instance)
 		JIT::GetSingleton().GetLatest()->dump();
 }
 
-FunctionWord::FunctionWord(llvm::Function *_function, size_t _inputs, size_t _outputs) : function(_function), inputs(_inputs), outputs(_outputs)
+FunctionWord::FunctionWord() : function(NULL), inputs(0), outputs(0)
 {
-	const llvm::FunctionType *ftype = function->getFunctionType();
-	if(ftype->getReturnType() != llvm::Type::VoidTy)
-		outputs--;
 }
 
 void FunctionWord::Execute(Engine* e, WordInstance *instance)
 {
+	size_t real_outputs;
+	const llvm::FunctionType *ftype = function->getFunctionType();
+	if(ftype->getReturnType() != llvm::Type::VoidTy)
+		real_outputs = outputs - 1;
+	else
+		real_outputs = outputs;
+
 	if(instance == NULL)
 	{
 		// setup inputs
-		std::vector<llvm::GenericValue> arguments(inputs + outputs);
+		std::vector<llvm::GenericValue> arguments(inputs + real_outputs);
 		for(size_t i = 0; i < inputs; i++)
 		{
 			int number = e->runtime_stack.front();
@@ -90,14 +94,14 @@ void FunctionWord::Execute(Engine* e, WordInstance *instance)
 		}
 
 		// setup outputs
-		int outs[outputs];
-		for(size_t i = 0; i < outputs; i++)
+		int outs[real_outputs];
+		for(size_t i = 0; i < real_outputs; i++)
 			arguments[i + inputs].PointerVal = (llvm::PointerTy)&outs[i];
 
 		llvm::GenericValue ret = JIT::GetSingleton().GetExecutionEngine()->runFunction(function, arguments);
 
 		// push outs
-		for(size_t i = 0; i < outputs; i++)
+		for(size_t i = 0; i < real_outputs; i++)
 			e->runtime_stack.push_front(outs[i]);
 		
 		const llvm::FunctionType *ftype = function->getFunctionType();
@@ -107,7 +111,7 @@ void FunctionWord::Execute(Engine* e, WordInstance *instance)
 	else
 	{
 		// setup inputs
-		std::vector<llvm::Value *> arguments(inputs + outputs);
+		std::vector<llvm::Value *> arguments(inputs + real_outputs);
 		for(size_t i = 0; i < inputs; i++)
 		{
 			WordIndex *input = e->Pop();
@@ -115,7 +119,7 @@ void FunctionWord::Execute(Engine* e, WordInstance *instance)
 		}
 
 		// setup outputs
-		for(size_t i = 0; i < outputs; i++)
+		for(size_t i = 0; i < real_outputs; i++)
 		{
 			llvm::Value *value = JIT::GetSingleton().GetBuilder()->CreateAlloca(llvm::Type::Int32Ty);
 			arguments[i + inputs] = value;
@@ -126,7 +130,7 @@ void FunctionWord::Execute(Engine* e, WordInstance *instance)
 		JIT::GetSingleton().GetBuilder()->CreateCall<std::vector<llvm::Value *>::iterator>(function, arguments.begin(), arguments.end());
 
 		// finish outputs
-		for(size_t i = 0; i < outputs; i++)
+		for(size_t i = 0; i < real_outputs; i++)
 		{
 			llvm::Value *output = instance->GetOutput(i);
 			output = JIT::GetSingleton().GetBuilder()->CreateLoad(output);
@@ -151,11 +155,6 @@ void ArgumentWord::Execute(Engine* e, WordInstance *instance)
 	assert(instance != NULL);
 	llvm::Value *output = JIT::GetSingleton().CreateInputArgument();
 	instance->SetOutput(0, output);
-}
-
-void InlineWord::Execute(Engine* e, WordInstance *instance)
-{
-	e->GetLatest()->SetInline(true);
 }
 
 void StringWord::Execute(Engine* e, WordInstance *instance)
