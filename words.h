@@ -61,11 +61,3 @@ public:
 	void Execute(Engine* e, WordInstance *instance);
 };
 
-class ExternWord : public Word
-{
-public:
-	std::string GetName() { return "extern"; }
-
-	void Execute(Engine* e, WordInstance *instance);
-};
-
