@@ -135,7 +135,7 @@ void Engine::Push(WordInstance *instance)
 {
 	// setup outputs
 	for(size_t i = 0; i < instance->GetOutputSize(); i++)
-		compiler_stack.push_back(new WordIndex(instance, i));
+		compiler_stack.push_front(new WordIndex(instance, i));
 }
 
 WordIndex *Engine::Pop()

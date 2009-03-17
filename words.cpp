@@ -44,7 +44,7 @@ void FunctionWord::Execute(WordInstance *instance)
 		
 		const llvm::FunctionType *ftype = function->getFunctionType();
 		if(ftype->getReturnType() != llvm::Type::VoidTy)
-			e.runtime_stack.push_front((int)ret.PointerVal);	
+			e.runtime_stack.push_back((int)ret.PointerVal);	
 	}
 	else
 	{
