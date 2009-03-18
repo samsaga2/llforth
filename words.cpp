@@ -40,7 +40,7 @@ void FunctionWord::Execute(WordInstance *instance)
 
 		// push outs
 		for(size_t i = 0; i < real_outputs; i++)
-			e.runtime_stack.push_front(outs[i]);
+			e.runtime_stack.push_back(outs[i]);
 		
 		const llvm::FunctionType *ftype = function->getFunctionType();
 		if(ftype->getReturnType() != llvm::Type::VoidTy)
